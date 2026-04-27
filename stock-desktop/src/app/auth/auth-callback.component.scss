@@ -1,0 +1,14 @@
+.auth-callback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef1f8 100%);
+}
+
+.auth-callback__text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+}

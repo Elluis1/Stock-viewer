@@ -1,0 +1,108 @@
+<div>
+  <h2 class="auth-title">Crear cuenta</h2>
+  <p class="auth-subtitle">Podés usar Google o registrarte con correo y contraseña.</p>
+</div>
+
+@if (errorMessage(); as err) {
+  <div class="auth-alert" role="alert">{{ err }}</div>
+}
+@if (successMessage(); as ok) {
+  <div class="auth-success" role="status">{{ ok }}</div>
+}
+
+<div class="auth-oauth">
+  <button
+    type="button"
+    class="auth-google"
+    (click)="signInWithGoogle()"
+    [disabled]="googleLoading() || loading()"
+  >
+    <span class="auth-google__icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 48 48" focusable="false">
+        <path
+          fill="#EA4335"
+          d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+        />
+        <path
+          fill="#4285F4"
+          d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+        />
+        <path
+          fill="#FBBC05"
+          d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+        />
+        <path
+          fill="#34A853"
+          d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+        />
+        <path fill="none" d="M0 0h48v48H0z" />
+      </svg>
+    </span>
+    {{ googleLoading() ? 'Abriendo Google…' : 'Continuar con Google' }}
+  </button>
+</div>
+
+<div class="auth-divider"><span>o con correo</span></div>
+
+<form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <label class="auth-field">
+    <span class="auth-label">Correo electrónico</span>
+    <input
+      class="auth-input"
+      type="email"
+      formControlName="email"
+      autocomplete="email"
+      inputmode="email"
+      placeholder="nombre@ejemplo.com"
+    />
+    @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+      <span class="auth-error">El correo es obligatorio.</span>
+    }
+    @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+      <span class="auth-error">Ingresá un correo válido.</span>
+    }
+  </label>
+
+  <label class="auth-field">
+    <span class="auth-label">Contraseña</span>
+    <input
+      class="auth-input"
+      type="password"
+      formControlName="password"
+      autocomplete="new-password"
+      placeholder="Mínimo 6 caracteres"
+    />
+    @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+      <span class="auth-error">La contraseña es obligatoria.</span>
+    }
+    @if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+      <span class="auth-error">Mínimo 6 caracteres.</span>
+    }
+  </label>
+
+  <label class="auth-field">
+    <span class="auth-label">Repetir contraseña</span>
+    <input
+      class="auth-input"
+      type="password"
+      formControlName="confirmPassword"
+      autocomplete="new-password"
+      placeholder="Igual que arriba"
+    />
+    @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')) {
+      <span class="auth-error">Repetí la contraseña.</span>
+    }
+    @if (form.touched && form.hasError('passwordMismatch')) {
+      <span class="auth-error">Las contraseñas no coinciden.</span>
+    }
+  </label>
+
+  <button class="auth-submit" type="submit" [disabled]="loading() || googleLoading()">
+    {{ loading() ? 'Creando cuenta…' : 'Registrarme' }}
+  </button>
+</form>
+
+<p class="auth-footnote">
+  ¿Ya tenés cuenta?
+  <a routerLink="/auth/login">Iniciá sesión</a>
+</p>

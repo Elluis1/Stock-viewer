@@ -1,0 +1,193 @@
+<div class="page">
+  <a class="page__back" routerLink="/app/companies">← Mis empresas</a>
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else if (errorMessage()) {
+    <div class="page__alert" role="alert">{{ errorMessage() }}</div>
+  } @else {
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Inventario y productos</h1>
+        <p class="page__subtitle">{{ companyName() }}</p>
+      </div>
+    </div>
+    @if (companyId(); as cid) {
+      <nav class="tabs" aria-label="Secciones de la empresa">
+        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+      </nav>
+    }
+
+    @if (inventory().length > 0) {
+      <section class="panel">
+        <h2 class="panel__title">Compra a proveedor</h2>
+        <p class="panel__help">
+          Registrá la cantidad que entró y el costo unitario que pagaste. Actualiza el stock y el costo de referencia del producto.
+        </p>
+        <form class="form" [formGroup]="purchaseForm" (ngSubmit)="recordPurchase()" novalidate>
+          <div class="form__row form__row--wrap">
+            <label class="form__field form__field--grow">
+              <span class="form__label">Producto</span>
+              <select class="form__input" formControlName="productId">
+                @for (row of inventory(); track row.product_id) {
+                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
+                }
+              </select>
+            </label>
+            <label class="form__field">
+              <span class="form__label">Cantidad</span>
+              <input class="form__input" type="number" formControlName="quantity" min="0.0001" step="any" />
+            </label>
+            <label class="form__field">
+              <span class="form__label">Costo unitario</span>
+              <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" />
+            </label>
+            <label class="form__field form__field--grow">
+              <span class="form__label">Nota (opcional)</span>
+              <input class="form__input" type="text" formControlName="note" placeholder="Factura, proveedor…" />
+            </label>
+            <div class="form__field form__field--btn">
+              <span class="form__label">&nbsp;</span>
+              <button class="form__submit" type="submit" [disabled]="savingPurchase()">
+                {{ savingPurchase() ? 'Guardando…' : 'Registrar compra' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Precio de venta por defecto</h2>
+        <p class="panel__help">
+          Es el precio que se propone al registrar ventas. Podés cambiarlo cuando quieras; en cada venta también podés ajustar el precio solo para esa operación.
+        </p>
+        <form class="form" [formGroup]="priceDefaultForm" (ngSubmit)="saveDefaultSalePrice()" novalidate>
+          <div class="form__row form__row--wrap">
+            <label class="form__field form__field--grow">
+              <span class="form__label">Producto</span>
+              <select class="form__input" formControlName="productId">
+                @for (row of inventory(); track row.product_id) {
+                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
+                }
+              </select>
+            </label>
+            <label class="form__field">
+              <span class="form__label">Precio venta / unidad</span>
+              <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" />
+              @if (priceDefaultForm.controls.defaultSalePrice.touched && priceDefaultForm.controls.defaultSalePrice.hasError('required')) {
+                <span class="form__error">Obligatorio para guardar.</span>
+              }
+            </label>
+            <div class="form__field form__field--btn">
+              <span class="form__label">&nbsp;</span>
+              <button class="form__submit" type="submit" [disabled]="savingPriceDefault()">
+                {{ savingPriceDefault() ? 'Guardando…' : 'Guardar precio por defecto' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    }
+
+    <section class="panel">
+      <h2 class="panel__title">Nuevo producto</h2>
+      <p class="panel__help">
+        Podés cargar stock inicial como si fuera una compra: cantidad y costo unitario a proveedor (opcional).
+      </p>
+      <form class="form" [formGroup]="productForm" (ngSubmit)="addProduct()" novalidate>
+        <div class="form__row form__row--wrap">
+          <label class="form__field form__field--grow">
+            <span class="form__label">Nombre</span>
+            <input class="form__input" type="text" formControlName="name" />
+            @if (productForm.controls.name.touched && productForm.controls.name.hasError('required')) {
+              <span class="form__error">Obligatorio.</span>
+            }
+          </label>
+          <label class="form__field">
+            <span class="form__label">SKU (opcional)</span>
+            <input class="form__input" type="text" formControlName="sku" />
+          </label>
+          <label class="form__field form__field--unit">
+            <span class="form__label">Medida de venta</span>
+            <input
+              class="form__input"
+              type="text"
+              formControlName="unit"
+              placeholder="ud, kg, caja…"
+              title="Cómo contás el producto (no es la cantidad en stock)"
+            />
+            <span class="form__hint">No es el stock: es ud / kg / caja, etc.</span>
+          </label>
+          <label class="form__field">
+            <span class="form__label">Cant. inicial (opc.)</span>
+            <input class="form__input" type="number" formControlName="initialQuantity" min="0" step="any" placeholder="0" />
+          </label>
+          <label class="form__field">
+            <span class="form__label">Costo unit. compra (opc.)</span>
+            <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" placeholder="Si hay cantidad" />
+          </label>
+          <label class="form__field">
+            <span class="form__label">Precio venta por defecto (opc.)</span>
+            <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" placeholder="Ej. venta al público" />
+            <span class="form__hint">Se usa al cargar ventas con solo producto y cantidad.</span>
+          </label>
+          <div class="form__field form__field--btn">
+            <span class="form__label">&nbsp;</span>
+            <button class="form__submit" type="submit" [disabled]="savingProduct()">
+              {{ savingProduct() ? 'Guardando…' : 'Agregar producto' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel panel--table">
+      <h2 class="panel__title">Inventario</h2>
+      @if (inventory().length === 0) {
+        <p class="page__muted">Todavía no hay productos. Creá el primero arriba.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <colgroup>
+              <col class="table__col-name" />
+              <col class="table__col-sku" />
+              <col class="table__col-unit" />
+              <col class="table__col-stock" />
+              <col class="table__col-cost" />
+              <col class="table__col-sale" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">SKU</th>
+                <th scope="col">Medida</th>
+                <th class="table__num" scope="col">Stock</th>
+                <th class="table__num" scope="col">Costo unit.</th>
+                <th class="table__num" scope="col">Precio venta</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of inventory(); track row.product_id) {
+                <tr>
+                  <td class="table__cell-text">{{ row.name }}</td>
+                  <td class="table__cell-muted">{{ row.sku ?? '—' }}</td>
+                  <td class="table__cell-muted">{{ row.unit }}</td>
+                  <td class="table__num table__cell-strong">{{ formatQty(row.quantity_on_hand) }}</td>
+                  <td class="table__num table__cell-strong">{{ formatMoney(displayUnitCost(row)) }}</td>
+                  <td class="table__num table__cell-strong">{{ formatMoney(displayDefaultSalePrice(row)) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="panel__footnote">
+          <strong>Medida</strong> es la unidad de conteo (ud, kg…), no la cantidad en stock — el stock está en su columna.
+          El costo es el de la última compra; si no hay, el de referencia del producto.
+          <strong>Precio venta</strong> es el valor por defecto al registrar ventas (editable arriba o en la venta).
+        </p>
+      }
+    </section>
+  }
+</div>

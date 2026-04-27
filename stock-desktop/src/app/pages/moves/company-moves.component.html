@@ -1,0 +1,174 @@
+<div class="page">
+  <div class="page__breadcrumbs">
+    <a routerLink="/app/companies">← Empresas</a>
+  </div>
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else if (!companyName()) {
+    <div class="page__alert" role="alert">{{ errorMessage() ?? 'No se pudo cargar la empresa.' }}</div>
+  } @else {
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Ventas y movimientos del día</h1>
+        <p class="page__subtitle">{{ companyName() }}</p>
+      </div>
+      <label class="page__date">
+        <span class="page__date-label">Día</span>
+        <input type="date" [value]="dayStr()" (change)="onDayChange($event)" />
+      </label>
+    </div>
+    @if (companyId(); as cid) {
+      <nav class="tabs" aria-label="Secciones de la empresa">
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+      </nav>
+    }
+
+    @if (errorMessage()) {
+      <div class="page__alert" role="alert">{{ errorMessage() }}</div>
+    }
+
+    <section class="panel">
+      <h2 class="panel__title">Registrar venta</h2>
+      <p class="panel__help">
+        Elegí producto y cantidad: el precio de venta y el costo salen del producto (precio por defecto en Inventario y último costo de compra). Podés cambiarlos solo para esta venta abajo.
+      </p>
+      @if (inventory().length === 0) {
+        <p class="page__muted">Primero creá productos en Inventario.</p>
+      } @else {
+        <p class="panel__stock">
+          Stock disponible del producto elegido:
+          <strong>{{ formatQtyPlain(saleStockAvailable()) }}</strong>
+        </p>
+        @if (saleDefaultsComplete()) {
+          <p class="panel__preview">{{ saleDefaultsSummary() }}</p>
+        }
+        @if (saleDefaultsMissingHint(); as miss) {
+          <p class="panel__warn" role="status">{{ miss }}</p>
+        }
+        @if (saleQtyExceedsStock()) {
+          <p class="panel__warn" role="status">La cantidad supera el stock disponible.</p>
+        }
+        <form class="form" [formGroup]="saleForm" (ngSubmit)="recordSale()" novalidate>
+          <div class="form__row form__row--wrap">
+            <label class="form__field form__field--grow">
+              <span class="form__label">Producto</span>
+              <select class="form__input" formControlName="productId">
+                @for (row of inventory(); track row.product_id) {
+                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
+                }
+              </select>
+            </label>
+            <label class="form__field">
+              <span class="form__label">Cantidad (máx. {{ formatQtyPlain(saleStockAvailable()) }})</span>
+              <input
+                class="form__input"
+                type="number"
+                formControlName="quantity"
+                min="0.0001"
+                step="any"
+                [attr.max]="saleStockAvailable() > 0 ? saleStockAvailable() : null"
+              />
+            </label>
+            <div class="form__field form__field--btn">
+              <span class="form__label">&nbsp;</span>
+              <button
+                class="form__submit"
+                type="submit"
+                [disabled]="
+                  savingSale() ||
+                  saleStockAvailable() <= 0 ||
+                  saleQtyExceedsStock() ||
+                  !saleDefaultsComplete()
+                "
+              >
+                {{ savingSale() ? 'Guardando…' : 'Registrar venta' }}
+              </button>
+            </div>
+          </div>
+          <details class="form__advanced">
+            <summary>Ajustar precio o costo (opcional)</summary>
+            <div class="form__row form__row--wrap form__advanced__row">
+              <label class="form__field">
+                <span class="form__label">Precio venta unit.</span>
+                <input class="form__input" type="number" formControlName="unitSalePrice" min="0" step="any" placeholder="Por defecto del producto" />
+              </label>
+              <label class="form__field">
+                <span class="form__label">Costo al vender</span>
+                <input class="form__input" type="number" formControlName="unitCostAtSale" min="0" step="any" placeholder="Último costo / referencia" />
+              </label>
+            </div>
+          </details>
+        </form>
+      }
+    </section>
+
+    <section class="panel panel--table">
+      <h2 class="panel__title">Entradas y salidas del día</h2>
+      <p class="panel__help">Compras (entrada de stock), ventas (salida) y otros movimientos registrados en la fecha elegida.</p>
+
+      @if (!loadingMoves()) {
+        <div class="balance">
+          <div class="balance__card balance__card--out">
+            <span class="balance__label">Gastado en compras</span>
+            <span class="balance__value">{{ formatMoney(dayPurchasesSpend()) }}</span>
+            <span class="balance__hint">Suma del día (costo × cantidad en compras)</span>
+          </div>
+          <div class="balance__card balance__card--in">
+            <span class="balance__label">Ingresos por ventas</span>
+            <span class="balance__value">{{ formatMoney(daySalesRevenue()) }}</span>
+            <span class="balance__hint">Suma del día (precio venta × cantidad en ventas)</span>
+          </div>
+          <div class="balance__card balance__card--net">
+            <span class="balance__label">Balance del día</span>
+            <span class="balance__value">{{ formatMoney(dayBalanceNet()) }}</span>
+            <span class="balance__hint">Ingresos por ventas − gasto en compras</span>
+          </div>
+        </div>
+      }
+
+      @if (loadingMoves()) {
+        <p class="page__muted">Cargando movimientos…</p>
+      } @else if (movements().length === 0) {
+        <p class="page__muted">No hay movimientos en este día.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <colgroup>
+              <col class="col-time" />
+              <col class="col-type" />
+              <col class="col-product" />
+              <col class="col-qty" />
+              <col class="col-detail" />
+              <col class="col-note" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Hora</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Producto</th>
+                <th class="table__num" scope="col">Cantidad</th>
+                <th scope="col">Importes</th>
+                <th scope="col">Nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of movements(); track row.id) {
+                <tr>
+                  <td class="cell-time">{{ row.created_at | date: 'HH:mm' }}</td>
+                  <td><span [class]="movementKindClass(row.movement_type)">{{ movementLabel(row.movement_type) }}</span></td>
+                  <td class="cell-product">{{ productName(row) }}</td>
+                  <td class="table__num cell-strong">{{ formatQtySigned(row) }}</td>
+                  <td class="cell-detail">{{ detailLine(row) }}</td>
+                  <td class="cell-note">{{ row.note ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="page__breadcrumbs">
+    <a routerLink="/app/companies">← Empresas</a>
+  </div>
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else if (!companyName()) {
+    <div class="page__alert" role="alert">{{ errorMessage() ?? 'No se pudo cargar la empresa.' }}</div>
+  } @else {
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Resumen global</h1>
+        <p class="page__subtitle">{{ companyName() }}</p>
+      </div>
+      <label class="page__date">
+        <span class="page__date-label">Fecha de referencia</span>
+        <input type="date" [value]="dayStr()" (change)="onDayChange($event)" />
+      </label>
+    </div>
+    @if (companyId(); as cid) {
+      <nav class="tabs" aria-label="Secciones de la empresa">
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+      </nav>
+    }
+
+    @if (errorMessage()) {
+      <div class="page__alert" role="alert">{{ errorMessage() }}</div>
+    }
+
+    <section class="panel">
+      <h2 class="panel__title">Zona horaria local del reporte</h2>
+      <p class="panel__help">
+        Define qué cuenta como día/mes/año para esta empresa (ej. <code>America/Bogota</code>, <code>Europe/Madrid</code>, <code>UTC</code>).
+      </p>
+      <div class="tz">
+        <select #tzSelect class="tz__select" [value]="reportingTimezone()">
+          @for (tz of timezoneOptionsForSelect(); track tz.value) {
+            <option [value]="tz.value">{{ tz.label }}</option>
+          }
+        </select>
+        <button class="tz__btn" type="button" [disabled]="savingTimezone()" (click)="saveTimezone(tzSelect.value)">
+          {{ savingTimezone() ? 'Guardando…' : 'Guardar zona horaria' }}
+        </button>
+      </div>
+    </section>
+
+    @if (loadingSummary()) {
+      <p class="page__muted">Cargando resumen…</p>
+    } @else {
+      <section class="panel">
+        <h2 class="panel__title">Mensual ({{ monthLabel() }})</h2>
+        <div class="cards">
+          <div class="card card--in">
+            <span class="card__label">Ingresos</span>
+            <span class="card__value">{{ formatMoney(monthCurrent().salesRevenue) }}</span>
+            <span class="card__hint">vs {{ previousMonthLabel() }}: {{ formatDeltaPct(monthDeltaRevenuePct()) }}</span>
+          </div>
+          <div class="card card--out">
+            <span class="card__label">Gastos compras</span>
+            <span class="card__value">{{ formatMoney(monthCurrent().purchaseSpend) }}</span>
+            <span class="card__hint">Control de costo de reposición</span>
+          </div>
+          <div class="card card--net">
+            <span class="card__label">Balance neto</span>
+            <span class="card__value">{{ formatMoney(monthCurrent().netBalance) }}</span>
+            <span class="card__hint">vs {{ previousMonthLabel() }}: {{ formatDeltaPct(monthDeltaNetPct()) }}</span>
+          </div>
+          <div class="card card--profit">
+            <span class="card__label">Ganancia bruta</span>
+            <span class="card__value">{{ formatMoney(monthCurrent().grossProfit) }}</span>
+            <span class="card__hint">Ventas - costo de lo vendido</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">Anual ({{ yearLabel() }})</h2>
+        <div class="cards">
+          <div class="card card--in">
+            <span class="card__label">Ingresos</span>
+            <span class="card__value">{{ formatMoney(yearCurrent().salesRevenue) }}</span>
+            <span class="card__hint">vs {{ previousYearLabel() }}: {{ formatDeltaPct(yearDeltaRevenuePct()) }}</span>
+          </div>
+          <div class="card card--out">
+            <span class="card__label">Gastos compras</span>
+            <span class="card__value">{{ formatMoney(yearCurrent().purchaseSpend) }}</span>
+            <span class="card__hint">Acumulado anual</span>
+          </div>
+          <div class="card card--net">
+            <span class="card__label">Balance neto</span>
+            <span class="card__value">{{ formatMoney(yearCurrent().netBalance) }}</span>
+            <span class="card__hint">vs {{ previousYearLabel() }}: {{ formatDeltaPct(yearDeltaNetPct()) }}</span>
+          </div>
+          <div class="card card--profit">
+            <span class="card__label">Ganancia bruta</span>
+            <span class="card__value">{{ formatMoney(yearCurrent().grossProfit) }}</span>
+            <span class="card__hint">Ventas - costo de lo vendido</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--table">
+        <h2 class="panel__title">Top productos del mes</h2>
+        <p class="panel__help">Ranking por facturación del mes seleccionado.</p>
+        @if (topProductsMonth().length === 0) {
+          <p class="page__muted">No hay ventas en este mes.</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="table__num">Unidades</th>
+                  <th class="table__num">Ingresos</th>
+                  <th class="table__num">Ganancia bruta</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of topProductsMonth(); track row.productName) {
+                  <tr>
+                    <td>{{ row.productName }}</td>
+                    <td class="table__num">{{ formatQty(row.unitsSold) }}</td>
+                    <td class="table__num">{{ formatMoney(row.salesRevenue) }}</td>
+                    <td class="table__num">{{ formatMoney(row.grossProfit) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

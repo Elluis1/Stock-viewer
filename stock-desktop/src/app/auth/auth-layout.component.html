@@ -1,0 +1,21 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
+      <a
+        class="auth-tab"
+        routerLink="/auth/login"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        role="tab"
+      >
+        Iniciar sesión
+      </a>
+      <a class="auth-tab" routerLink="/auth/register" routerLinkActive="is-active" role="tab">
+        Crear cuenta
+      </a>
+    </div>
+    <div class="auth-panel">
+      <router-outlet />
+    </div>
+  </div>
+</div>

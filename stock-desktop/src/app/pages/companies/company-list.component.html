@@ -1,0 +1,38 @@
+<div class="page">
+  <div class="page__head">
+    <div>
+      <h1 class="page__title">Mis empresas</h1>
+      <p class="page__lead">Creá una empresa y después agregá productos y movimientos de stock.</p>
+    </div>
+    <a class="page__primary" routerLink="/app/companies/new">Nueva empresa</a>
+  </div>
+
+  @if (errorMessage(); as err) {
+    <div class="page__alert" role="alert">{{ err }}</div>
+  }
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else if (companies().length === 0) {
+    <div class="page__empty">
+      <p>Todavía no tenés empresas.</p>
+      <a routerLink="/app/companies/new" class="page__primary">Crear la primera</a>
+    </div>
+  } @else {
+    <ul class="company-list">
+      @for (c of companies(); track c.id) {
+        <li class="company-list__item">
+          <div class="company-list__main">
+            <span class="company-list__name">{{ c.name }}</span>
+            <span class="company-list__meta">Creada {{ c.created_at | date: 'short' }}</span>
+          </div>
+          <div class="company-list__actions">
+            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'products']">Inventario</a>
+            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'movimientos']">Movimientos</a>
+            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'resumen']">Resumen</a>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

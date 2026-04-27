@@ -1,0 +1,27 @@
+<div class="page">
+  <a class="page__back" routerLink="/app/companies">← Volver a empresas</a>
+  <h1 class="page__title">Nueva empresa</h1>
+  <p class="page__lead">El nombre es el que verás en listados y reportes. Podés cambiarlo más adelante cuando agreguemos edición.</p>
+
+  @if (errorMessage(); as err) {
+    <div class="page__alert" role="alert">{{ err }}</div>
+  }
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label class="form__field">
+      <span class="form__label">Nombre de la empresa</span>
+      <input class="form__input" type="text" formControlName="name" autocomplete="organization" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <span class="form__error">El nombre es obligatorio.</span>
+      }
+      @if (form.controls.name.touched && form.controls.name.hasError('minlength')) {
+        <span class="form__error">Al menos 2 caracteres.</span>
+      }
+    </label>
+    <div class="form__actions">
+      <button class="form__submit" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Creando…' : 'Crear empresa' }}
+      </button>
+    </div>
+  </form>
+</div>

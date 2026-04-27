@@ -1,0 +1,62 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(1200px 600px at 20% 0%, rgb(37 99 235 / 12%), transparent 55%),
+    radial-gradient(900px 500px at 100% 20%, rgb(14 165 233 / 10%), transparent 50%),
+    linear-gradient(180deg, #f4f6fb 0%, #eef1f8 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 26rem;
+  border-radius: 14px;
+  padding: 1.5rem 1.5rem 1.35rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 6%),
+    0 12px 40px rgb(15 23 42 / 8%);
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: 10px;
+  background: #f1f5f9;
+}
+
+.auth-tab {
+  display: block;
+  text-align: center;
+  padding: 0.55rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.auth-tab:hover {
+  color: #0f172a;
+}
+
+.auth-tab.is-active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.auth-panel {
+  padding-top: 0.1rem;
+}

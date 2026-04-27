@@ -1,0 +1,59 @@
+.home {
+  max-width: 42rem;
+}
+
+.panel {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.home__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.home__lead {
+  margin: 0 0 1rem;
+  color: #333;
+  line-height: 1.55;
+}
+
+.home__actions {
+  margin: 0 0 1rem;
+}
+
+.home__cta {
+  display: inline-flex;
+  padding: 0.5rem 1rem;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.home__cta:hover {
+  filter: brightness(1.03);
+}
+
+.home__list {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  color: #2a2a2a;
+  line-height: 1.6;
+}
+
+.home__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+code {
+  font-size: 0.88em;
+}

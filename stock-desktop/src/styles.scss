@@ -1,0 +1,67 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    Inter,
+    "Segoe UI",
+    Roboto,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+body {
+  line-height: 1.45;
+}
+
+.page {
+  margin-inline: auto;
+  width: min(100%, 72rem);
+  padding-inline: clamp(1rem, 2.5vw, 2rem);
+}
+
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.tabs__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.83rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #475569;
+  transition: all 140ms ease;
+}
+
+.tabs__item:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.tabs__item--active {
+  color: #0b3aa4;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}

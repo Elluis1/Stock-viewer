@@ -1,0 +1,78 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #e2e2e2;
+  background: #fafafa;
+}
+
+.shell__brand {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.shell__brand:hover {
+  text-decoration: underline;
+}
+
+.shell__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.shell__nav a {
+  color: #334155;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.shell__nav a:hover {
+  color: #0f172a;
+  text-decoration: underline;
+}
+
+.shell__nav-cta {
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+.shell__nav-cta:hover {
+  filter: brightness(1.05);
+  text-decoration: none !important;
+}
+
+.shell__signout {
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+}
+
+.shell__signout:hover {
+  background: #f8fafc;
+}
+
+.shell__main {
+  flex: 1;
+  padding: 1.25rem;
+}
