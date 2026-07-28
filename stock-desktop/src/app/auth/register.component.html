@@ -104,5 +104,5 @@
 
 <p class="auth-footnote">
   ¿Ya tenés cuenta?
-  <a routerLink="/auth/login">Iniciá sesión</a>
+  <a [routerLink]="['/auth/login']" [queryParams]="loginQueryParams">Iniciá sesión</a>
 </p>

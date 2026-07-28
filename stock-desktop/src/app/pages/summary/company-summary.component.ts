@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CompanyAccessService } from '../../core/company-access.service';
 import { SupabaseService } from '../../core/supabase.service';
 import type {
+  CompanyMemberRole,
   CompanyMonthlyFinancialRow,
   CompanyProductMonthlySalesRow,
   CompanyYearlyFinancialRow,
@@ -34,10 +36,12 @@ type TimezoneOption = {
 })
 export class CompanySummaryComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly access = inject(CompanyAccessService);
   private readonly route = inject(ActivatedRoute);
 
   readonly companyId = signal<string | null>(null);
   readonly companyName = signal<string | null>(null);
+  readonly myRole = signal<CompanyMemberRole | null>(null);
   readonly dayStr = signal(this.isoToday());
   readonly reportingTimezone = signal('UTC');
   readonly loading = signal(true);
@@ -76,6 +80,14 @@ export class CompanySummaryComponent implements OnInit {
   readonly yearDeltaNetPct = computed(() =>
     this.safeDeltaPct(this.yearCurrent().netBalance, this.yearPrevious().netBalance),
   );
+
+  get canEditCompanySettings(): boolean {
+    return this.access.canEditCompanySettings(this.myRole());
+  }
+
+  roleLabel(): string {
+    return this.access.roleLabel(this.myRole());
+  }
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('companyId');
@@ -189,6 +201,10 @@ export class CompanySummaryComponent implements OnInit {
     if (!cid) {
       return;
     }
+    if (!this.canEditCompanySettings) {
+      this.errorMessage.set('Solo owner o admin pueden cambiar la zona horaria.');
+      return;
+    }
     const tz = rawTz.trim();
     if (!tz) {
       this.errorMessage.set('La zona horaria no puede quedar vacía.');
@@ -224,22 +240,26 @@ export class CompanySummaryComponent implements OnInit {
   private async loadCompany(companyId: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
-    const { data, error } = await this.supabase.client
-      .from('companies')
-      .select('name, reporting_timezone')
-      .eq('id', companyId)
-      .maybeSingle();
+    const [companyRes, role] = await Promise.all([
+      this.supabase.client
+        .from('companies')
+        .select('name, reporting_timezone')
+        .eq('id', companyId)
+        .maybeSingle(),
+      this.access.getMyRole(companyId),
+    ]);
     this.loading.set(false);
-    if (error) {
-      this.errorMessage.set(error.message);
+    this.myRole.set(role);
+    if (companyRes.error) {
+      this.errorMessage.set(companyRes.error.message);
       return;
     }
-    if (!data) {
+    if (!companyRes.data) {
       this.errorMessage.set('No encontramos esa empresa o no tenés acceso.');
       return;
     }
-    this.companyName.set(String(data.name));
-    const tz = data.reporting_timezone == null ? 'UTC' : String(data.reporting_timezone);
+    this.companyName.set(String(companyRes.data.name));
+    const tz = companyRes.data.reporting_timezone == null ? 'UTC' : String(companyRes.data.reporting_timezone);
     this.reportingTimezone.set(tz || 'UTC');
   }
 

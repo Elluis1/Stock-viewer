@@ -4,6 +4,7 @@
     <nav class="shell__nav">
       @if (session(); as _s) {
         <a routerLink="/app/companies">Mis empresas</a>
+        <a routerLink="/app/seguridad">Seguridad (2FA)</a>
         <button type="button" class="shell__signout" (click)="signOut()">Salir</button>
       } @else {
         <a routerLink="/auth/login">Entrar</a>

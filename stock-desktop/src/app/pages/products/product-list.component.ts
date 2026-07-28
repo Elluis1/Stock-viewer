@@ -2,8 +2,9 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CompanyAccessService } from '../../core/company-access.service';
 import { SupabaseService } from '../../core/supabase.service';
-import type { InventorySnapshotRow } from '../../models/stock.types';
+import type { CompanyMemberRole, InventorySnapshotRow } from '../../models/stock.types';
 import { parseNonNegativeNumber, parsePositiveNumber } from '../../shared/form-numbers';
 
 @Component({
@@ -14,12 +15,14 @@ import { parseNonNegativeNumber, parsePositiveNumber } from '../../shared/form-n
 })
 export class ProductListComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly access = inject(CompanyAccessService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly companyId = signal<string | null>(null);
   readonly companyName = signal<string | null>(null);
+  readonly myRole = signal<CompanyMemberRole | null>(null);
   readonly inventory = signal<InventorySnapshotRow[]>([]);
   readonly loading = signal(true);
   readonly savingProduct = signal(false);
@@ -49,6 +52,18 @@ export class ProductListComponent implements OnInit {
     defaultSalePrice: ['', [Validators.required]],
   });
 
+  get canManageCatalog(): boolean {
+    return this.access.canManageCatalog(this.myRole());
+  }
+
+  get canOperateStock(): boolean {
+    return this.access.canOperateStock(this.myRole());
+  }
+
+  roleLabel(): string {
+    return this.access.roleLabel(this.myRole());
+  }
+
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('companyId');
     this.companyId.set(id);
@@ -66,15 +81,17 @@ export class ProductListComponent implements OnInit {
   async load(companyId: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
-    const [companyRes, invRes] = await Promise.all([
+    const [companyRes, invRes, role] = await Promise.all([
       this.supabase.client.from('companies').select('name').eq('id', companyId).maybeSingle(),
       this.supabase.client
         .from('product_inventory_snapshot')
         .select('*')
         .eq('company_id', companyId)
         .order('name'),
+      this.access.getMyRole(companyId),
     ]);
     this.loading.set(false);
+    this.myRole.set(role);
     if (companyRes.error) {
       this.errorMessage.set(companyRes.error.message);
       return;
@@ -152,6 +169,10 @@ export class ProductListComponent implements OnInit {
     if (!cid) {
       return;
     }
+    if (!this.canManageCatalog) {
+      this.errorMessage.set('Solo owner o admin pueden dar de alta productos.');
+      return;
+    }
     this.errorMessage.set(null);
     if (this.productForm.invalid) {
       this.productForm.markAllAsTouched();
@@ -218,6 +239,10 @@ export class ProductListComponent implements OnInit {
     if (!cid) {
       return;
     }
+    if (!this.canManageCatalog) {
+      this.errorMessage.set('Solo owner o admin pueden cambiar precios por defecto.');
+      return;
+    }
     this.errorMessage.set(null);
     if (this.priceDefaultForm.invalid) {
       this.priceDefaultForm.markAllAsTouched();
@@ -246,6 +271,10 @@ export class ProductListComponent implements OnInit {
   async recordPurchase(): Promise<void> {
     const cid = this.companyId();
     if (!cid) {
+      return;
+    }
+    if (!this.canOperateStock) {
+      this.errorMessage.set('No tenés permiso para registrar compras.');
       return;
     }
     this.errorMessage.set(null);

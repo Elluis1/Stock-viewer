@@ -1,18 +1,23 @@
 <div>
   <h2 class="auth-title">Bienvenido de nuevo</h2>
-  <p class="auth-subtitle">Usá Google o tu correo y contraseña.</p>
+  @if (mfaStep()) {
+    <p class="auth-subtitle">Ingresá el código de 6 dígitos de tu app de autenticación (2FA).</p>
+  } @else {
+    <p class="auth-subtitle">Usá Google o tu correo y contraseña. Si activaste 2FA, después te pediremos el código del autenticador.</p>
+  }
 </div>
 
 @if (errorMessage(); as err) {
   <div class="auth-alert" role="alert">{{ err }}</div>
 }
 
+@if (!mfaStep()) {
 <div class="auth-oauth">
   <button
     type="button"
     class="auth-google"
     (click)="signInWithGoogle()"
-    [disabled]="googleLoading() || loading()"
+    [disabled]="googleLoading() || loading() || mfaLoading()"
   >
     <span class="auth-google__icon" aria-hidden="true">
       <svg width="18" height="18" viewBox="0 0 48 48" focusable="false">
@@ -38,10 +43,40 @@
     {{ googleLoading() ? 'Abriendo Google…' : 'Continuar con Google' }}
   </button>
 </div>
+}
 
-<div class="auth-divider"><span>o con correo</span></div>
+@if (!mfaStep()) {
+  <div class="auth-divider"><span>o con correo</span></div>
+}
 
-<form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+@if (mfaStep()) {
+  <form class="auth-form" [formGroup]="mfaForm" (ngSubmit)="submitMfa()" novalidate>
+    <label class="auth-field">
+      <span class="auth-label">Código 2FA (6 dígitos)</span>
+      <input
+        class="auth-input"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        autocomplete="one-time-code"
+        formControlName="code"
+      />
+      @if (mfaForm.controls.code.touched && mfaForm.controls.code.hasError('required')) {
+        <span class="auth-error">Ingresá el código.</span>
+      }
+      @if (mfaForm.controls.code.touched && mfaForm.controls.code.hasError('pattern')) {
+        <span class="auth-error">Tiene que ser 6 números.</span>
+      }
+    </label>
+    <button class="auth-submit" type="submit" [disabled]="mfaLoading() || loading()">
+      {{ mfaLoading() ? 'Verificando…' : 'Confirmar e ingresar' }}
+    </button>
+    <p class="auth-hint auth-hint--center">
+      <button type="button" class="auth-link" [disabled]="mfaLoading()" (click)="cancelMfaAndSignOut()">Usar otra cuenta</button>
+    </p>
+  </form>
+} @else {
+  <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
   <label class="auth-field">
     <span class="auth-label">Correo electrónico</span>
     <input
@@ -77,12 +112,13 @@
     }
   </label>
 
-  <button class="auth-submit" type="submit" [disabled]="loading() || googleLoading()">
-    {{ loading() ? 'Entrando…' : 'Entrar' }}
-  </button>
-</form>
+    <button class="auth-submit" type="submit" [disabled]="loading() || googleLoading() || mfaLoading()">
+      {{ loading() ? 'Entrando…' : 'Entrar' }}
+    </button>
+  </form>
 
-<p class="auth-footnote">
-  ¿No tenés cuenta?
-  <a routerLink="/auth/register">Creá una acá</a>
-</p>
+  <p class="auth-footnote">
+    ¿No tenés cuenta?
+    <a routerLink="/auth/register">Creá una acá</a>
+  </p>
+}

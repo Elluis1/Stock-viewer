@@ -1,0 +1,46 @@
+@use './auth-forms.shared';
+
+:host {
+  display: block;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.wrap {
+  padding: 0.5rem 0;
+}
+
+.title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.lead {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.foot {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.foot a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.foot a:hover {
+  text-decoration: underline;
+}

@@ -19,5 +19,20 @@ export function mapAuthError(message: string): string {
   if (m.includes('signup requires a valid password')) {
     return 'Contraseña no válida.';
   }
+  if (m.includes('verification disabled') || m.includes('mfa verification is disabled')) {
+    return 'La verificación MFA está desactivada en Supabase (Authentication → Multi-factor). Activá la verificación TOTP.';
+  }
+  if (m.includes('challenge') && (m.includes('expired') || m.includes('invalid'))) {
+    return 'El desafío de 2FA venció. Volvé a ingresar el código de 6 dígitos de inmediato (generá uno nuevo en la app).';
+  }
+  if (m.includes('mfa') && m.includes('verification')) {
+    return 'Código incorrecto o vencido. Probá de nuevo.';
+  }
+  if (m.includes('invalid') && m.includes('otp')) {
+    return 'Código de autenticador inválido.';
+  }
+  if (m.includes('too many requests')) {
+    return 'Demasiados intentos. Esperá un momento y probá de nuevo.';
+  }
   return message;
 }

@@ -18,7 +18,10 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly googleLoading = signal(false);
+  readonly mfaLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly mfaStep = signal(false);
+  private mfaFactorId: string | null = null;
 
   constructor() {
     const oauthError = this.route.snapshot.queryParamMap.get('oauth_error');
@@ -35,6 +38,10 @@ export class LoginComponent {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  readonly mfaForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+  });
+
   async submit(): Promise<void> {
     this.errorMessage.set(null);
     if (this.form.invalid) {
@@ -48,7 +55,53 @@ export class LoginComponent {
       this.errorMessage.set(mapAuthError(error.message));
       return;
     }
+    const mfa = await this.auth.prepareTotpLoginStep();
+    if (mfa.ok) {
+      this.mfaFactorId = mfa.factorId;
+      this.mfaForm.reset({ code: '' });
+      this.mfaStep.set(true);
+      return;
+    }
     await this.postLoginNavigate();
+  }
+
+  async submitMfa(): Promise<void> {
+    this.errorMessage.set(null);
+    if (this.mfaForm.invalid || !this.mfaFactorId) {
+      this.mfaForm.markAllAsTouched();
+      return;
+    }
+    const factorId = this.mfaFactorId;
+    const code = this.mfaForm.controls.code.value.replace(/\s/g, '');
+    this.mfaLoading.set(true);
+    const challengeRes = await this.auth.mfaChallenge(factorId);
+    if (challengeRes.error || !challengeRes.data?.id) {
+      this.mfaLoading.set(false);
+      this.errorMessage.set(
+        challengeRes.error ? mapAuthError(challengeRes.error.message) : 'No se pudo validar el código. Probá de nuevo.',
+      );
+      return;
+    }
+    const { error } = await this.auth.mfaVerify(factorId, challengeRes.data.id, code);
+    this.mfaLoading.set(false);
+    if (error) {
+      this.errorMessage.set(mapAuthError(error.message));
+      return;
+    }
+    this.resetMfaUi();
+    await this.postLoginNavigate();
+  }
+
+  async cancelMfaAndSignOut(): Promise<void> {
+    await this.auth.signOut();
+    this.resetMfaUi();
+    this.errorMessage.set(null);
+  }
+
+  private resetMfaUi(): void {
+    this.mfaStep.set(false);
+    this.mfaFactorId = null;
+    this.mfaForm.reset({ code: '' });
   }
 
   private async postLoginNavigate(): Promise<void> {

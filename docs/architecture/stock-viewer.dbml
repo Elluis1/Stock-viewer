@@ -1,0 +1,248 @@
+// =============================================================================
+// Stock Viewer — esquema conceptual (DBML)
+// Pegar en: https://dbdiagram.io
+//
+// Leyenda de Notes:
+//   [HOY]     = ya existe en migraciones Supabase
+//   [PROX]    = siguiente hito (equipo / invitaciones)
+//   [FUTURO]  = roadmap (sucursales, alertas, integraciones, etc.)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Auth (gestionado por Supabase Auth — no lo creás vos, solo se referencia)
+// ---------------------------------------------------------------------------
+
+Table auth_users {
+  id uuid [pk, note: 'Supabase Auth — auth.users']
+  email text
+  Note: '[HOY] Tecnología: Supabase Auth (JWT). Front Angular y/o FastAPI validan el token.'
+}
+
+// ---------------------------------------------------------------------------
+// Núcleo multi-empresa [HOY]
+// ---------------------------------------------------------------------------
+
+Table companies {
+  id uuid [pk]
+  name text [not null]
+  created_by uuid [not null, ref: > auth_users.id]
+  created_at timestamptz [default: `now()`]
+  reporting_timezone text [default: 'UTC', note: 'IANA, ej. America/Argentina/Buenos_Aires']
+
+  Note: '[HOY] Empresa / tenant. RPC create_company crea fila + membership owner.'
+}
+
+Table company_members {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  user_id uuid [not null, ref: > auth_users.id]
+  role text [not null, default: 'member', note: "owner | admin | member"]
+  created_at timestamptz [default: `now()`]
+
+  indexes {
+    (company_id, user_id) [unique]
+  }
+
+  Note: '[HOY] Puente multi-usuario + RLS. Falta UI de gestión de equipo.'
+}
+
+Table products {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  name text [not null]
+  sku text [note: 'Único por empresa si no es null']
+  barcode text [null, note: '[FUTURO] EAN/UPC para escaneo móvil / python-barcode']
+  unit text [not null, default: 'unit']
+  default_cost_unit numeric
+  default_sale_price_unit numeric
+  image_path text [null, note: '[FUTURO] path en Supabase Storage']
+  expires_at date [null, note: '[FUTURO] alertas de vencimiento']
+  min_stock numeric [null, note: '[FUTURO] umbral stock bajo']
+  warehouse_id uuid [null, ref: > warehouses.id, note: '[FUTURO] depósito default']
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  Note: '[HOY] Campos base + precios. barcode/image/min_stock/expires = futuro.'
+}
+
+Table stock_movements {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  product_id uuid [not null, ref: > products.id]
+  quantity numeric [not null, note: 'venta: negativo; compra: positivo']
+  movement_type text [not null, note: 'purchase | sale | adjustment | initial']
+  unit_cost numeric [note: 'solo purchase']
+  unit_sale_price numeric [note: 'solo sale']
+  unit_cost_at_sale numeric [note: 'solo sale — snapshot COGS']
+  note text
+  warehouse_id uuid [null, ref: > warehouses.id, note: '[FUTURO]']
+  branch_id uuid [null, ref: > branches.id, note: '[FUTURO]']
+  created_by uuid [ref: > auth_users.id]
+  created_at timestamptz [default: `now()`]
+
+  Note: '[HOY] Append-mostly. Stock = suma de quantities. Vistas PnL diarias/mensuales/anuales.'
+}
+
+// ---------------------------------------------------------------------------
+// Equipo / invitaciones [PROX] — núcleo del producto multi-empleado
+// ---------------------------------------------------------------------------
+
+Table company_invites {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  email text [not null]
+  role text [not null, default: 'member', note: 'admin | member (owner no se invita así)']
+  token text [not null, unique, note: 'token opaco en el link']
+  invited_by uuid [not null, ref: > auth_users.id]
+  status text [not null, default: 'pending', note: 'pending | accepted | revoked | expired']
+  expires_at timestamptz [not null]
+  accepted_by uuid [null, ref: > auth_users.id]
+  created_at timestamptz [default: `now()`]
+
+  Note: '''
+    [PROX→implementado en docs/sql/000007] Gestión: RPCs create/accept/revoke.
+    Comunicación: link manual (email automático más adelante).
+  '''
+}
+
+Table audit_log {
+  id uuid [pk]
+  company_id uuid [null, ref: > companies.id]
+  actor_user_id uuid [null, ref: > auth_users.id]
+  action text [not null, note: 'invite.created | member.removed | sale.created | ...']
+  entity_type text
+  entity_id uuid
+  metadata jsonb
+  created_at timestamptz [default: `now()`]
+
+  Note: '[PROX/FUTURO] Auditoría propia. Errores de app: Sentry. Escritura desde FastAPI.'
+}
+
+// ---------------------------------------------------------------------------
+// Sucursales y depósitos [FUTURO]
+// ---------------------------------------------------------------------------
+
+Table branches {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  name text [not null]
+  address text
+  is_active boolean [default: true]
+  created_at timestamptz [default: `now()`]
+
+  Note: '[FUTURO] Multi-sucursal.'
+}
+
+Table warehouses {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  branch_id uuid [null, ref: > branches.id]
+  name text [not null]
+  is_default boolean [default: false]
+  created_at timestamptz [default: `now()`]
+
+  Note: '[FUTURO] Depósitos / ubicaciones de stock.'
+}
+
+// ---------------------------------------------------------------------------
+// Alertas y notificaciones [FUTURO]
+// ---------------------------------------------------------------------------
+
+Table alert_rules {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  rule_type text [not null, note: 'low_stock | expiry | unusual_sales']
+  config jsonb [not null, note: 'umbrales, ventana de días, etc.']
+  is_active boolean [default: true]
+  created_at timestamptz [default: `now()`]
+
+  Note: '''
+    [FUTURO] Gestión: Celery/cron evalúa reglas.
+    Cache opcional: Redis. Comunicación: Email + FCM (Firebase) + WhatsApp API.
+  '''
+}
+
+Table notifications {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  user_id uuid [null, ref: > auth_users.id]
+  channel text [not null, note: 'in_app | email | push | whatsapp']
+  title text
+  body text
+  payload jsonb
+  status text [default: 'pending', note: 'pending | sent | failed']
+  created_at timestamptz [default: `now()`]
+  sent_at timestamptz
+
+  Note: '[FUTURO] Cola de salida. Workers Celery leen y despachan.'
+}
+
+// ---------------------------------------------------------------------------
+// Predicción / métricas cacheadas [FUTURO]
+// ---------------------------------------------------------------------------
+
+Table demand_forecasts {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  product_id uuid [not null, ref: > products.id]
+  forecast_date date [not null]
+  predicted_units numeric [not null]
+  model_version text
+  created_at timestamptz [default: `now()`]
+
+  Note: '[FUTURO] Job batch (Celery) sobre historial de stock_movements. UI: ApexCharts.'
+}
+
+// ---------------------------------------------------------------------------
+// Integraciones externas / API pública [FUTURO]
+// ---------------------------------------------------------------------------
+
+Table integration_connections {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  provider text [not null, note: 'mercadolibre | tiendanube | shopify | woocommerce | billing']
+  status text [default: 'disconnected']
+  credentials_ref text [note: 'secreto en vault / env, no en claro']
+  external_account_id text
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  Note: '''
+    [FUTURO] FastAPI webhooks + sync.
+    Comunicación: HTTPS webhooks, OAuth del provider. API pública para partners.
+  '''
+}
+
+Table api_keys {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  name text [not null]
+  key_hash text [not null]
+  scopes text[] [note: 'products:read | stock:write | ...']
+  last_used_at timestamptz
+  revoked_at timestamptz
+  created_at timestamptz [default: `now()`]
+
+  Note: '[FUTURO] API pública. Auth aparte de Supabase Auth de usuarios humanos.'
+}
+
+// ---------------------------------------------------------------------------
+// Reportes generados [FUTURO]
+// ---------------------------------------------------------------------------
+
+Table report_jobs {
+  id uuid [pk]
+  company_id uuid [not null, ref: > companies.id]
+  requested_by uuid [ref: > auth_users.id]
+  report_type text [not null, note: 'pnl_pdf | inventory_xlsx | ...']
+  status text [default: 'queued', note: 'queued | running | done | failed']
+  storage_path text [note: 'Supabase Storage']
+  error text
+  created_at timestamptz [default: `now()`]
+  finished_at timestamptz
+
+  Note: '''
+    [FUTURO] FastAPI encola → Celery genera con WeasyPrint / openpyxl
+    → sube a Supabase Storage → notifica al usuario.
+  '''
+}

@@ -9,7 +9,7 @@
     <div class="page__head">
       <div>
         <h1 class="page__title">Inventario y productos</h1>
-        <p class="page__subtitle">{{ companyName() }}</p>
+        <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
     </div>
     @if (companyId(); as cid) {
@@ -17,10 +17,12 @@
         <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
       </nav>
     }
 
     @if (inventory().length > 0) {
+      @if (canOperateStock) {
       <section class="panel">
         <h2 class="panel__title">Compra a proveedor</h2>
         <p class="panel__help">
@@ -57,7 +59,9 @@
           </div>
         </form>
       </section>
+      }
 
+      @if (canManageCatalog) {
       <section class="panel">
         <h2 class="panel__title">Precio de venta por defecto</h2>
         <p class="panel__help">
@@ -89,8 +93,10 @@
           </div>
         </form>
       </section>
+      }
     }
 
+    @if (canManageCatalog) {
     <section class="panel">
       <h2 class="panel__title">Nuevo producto</h2>
       <p class="panel__help">
@@ -142,11 +148,14 @@
         </div>
       </form>
     </section>
+    } @else if (inventory().length === 0) {
+      <p class="page__muted">No hay productos aún. Pedile a un owner o admin que dé de alta el catálogo.</p>
+    }
 
     <section class="panel panel--table">
       <h2 class="panel__title">Inventario</h2>
       @if (inventory().length === 0) {
-        <p class="page__muted">Todavía no hay productos. Creá el primero arriba.</p>
+        <p class="page__muted">Todavía no hay productos.{{ canManageCatalog ? ' Creá el primero arriba.' : '' }}</p>
       } @else {
         <div class="table-wrap">
           <table class="table">

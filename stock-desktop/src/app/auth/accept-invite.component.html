@@ -1,0 +1,62 @@
+<div>
+  <h2 class="auth-title">Invitación al equipo</h2>
+  <p class="auth-subtitle">Aceptá la invitación para ver y gestionar el stock de esa empresa.</p>
+</div>
+
+@if (errorMessage(); as err) {
+  <div class="auth-alert" role="alert">{{ err }}</div>
+}
+@if (successMessage(); as ok) {
+  <div class="auth-success" role="status">{{ ok }}</div>
+}
+
+@if (loading()) {
+  <p class="auth-muted">Cargando invitación…</p>
+} @else if (!token()) {
+  <p class="auth-muted">El link de invitación no es válido.</p>
+  <a routerLink="/auth/login" class="auth-link">Ir a iniciar sesión</a>
+} @else if (!hasSession()) {
+  @if (preview(); as p) {
+    <div class="invite-card">
+      <p><strong>Empresa:</strong> {{ p.company_name || '—' }}</p>
+      <p><strong>Email invitado:</strong> {{ p.email }}</p>
+      <p><strong>Rol:</strong> {{ p.role }}</p>
+    </div>
+  }
+  <p class="auth-muted">
+    Para unirte, iniciá sesión o registrate con el email invitado. Si no tenés cuenta, usá
+    <strong>Registrarse</strong> (el correo queda precargado).
+  </p>
+  <div class="auth-actions">
+    <a class="auth-btn" [routerLink]="['/auth/login']" [queryParams]="{ returnUrl: loginReturnUrl }">Iniciar sesión</a>
+    <a
+      class="auth-btn auth-btn--ghost"
+      [routerLink]="['/auth/register']"
+      [queryParams]="registerQueryParams"
+    >
+      Registrarse
+    </a>
+  </div>
+} @else {
+  @if (preview(); as p) {
+    <div class="invite-card">
+      <p><strong>Empresa:</strong> {{ p.company_name || '—' }}</p>
+      <p><strong>Email invitado:</strong> {{ p.email }}</p>
+      <p><strong>Rol:</strong> {{ p.role }}</p>
+      <p><strong>Estado:</strong> {{ p.status }}{{ p.expired ? ' (expirada)' : '' }}</p>
+    </div>
+    @if (p.status === 'pending' && !p.expired) {
+      <button type="button" class="auth-btn" (click)="accept()" [disabled]="accepting()">
+        {{ accepting() ? 'Uniéndote…' : 'Aceptar invitación' }}
+      </button>
+    } @else {
+      <p class="auth-muted">Esta invitación ya no se puede aceptar.</p>
+      <a routerLink="/app/companies" class="auth-link">Ir a mis empresas</a>
+    }
+  } @else if (!errorMessage()) {
+    <p class="auth-muted">No se pudo cargar el detalle. Podés intentar aceptar igual.</p>
+    <button type="button" class="auth-btn" (click)="accept()" [disabled]="accepting()">
+      {{ accepting() ? 'Uniéndote…' : 'Aceptar invitación' }}
+    </button>
+  }
+}

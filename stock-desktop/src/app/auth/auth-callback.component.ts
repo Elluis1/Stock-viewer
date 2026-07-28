@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../core/supabase.service';
+import { AuthService } from './auth.service';
 
 @Component({
   selector: 'app-auth-callback',
@@ -11,6 +12,7 @@ import { SupabaseService } from '../core/supabase.service';
 export class AuthCallbackComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   async ngOnInit(): Promise<void> {
     const search = new URLSearchParams(window.location.search);
@@ -39,6 +41,11 @@ export class AuthCallbackComponent implements OnInit {
       data: { session },
     } = await this.supabase.client.auth.getSession();
     if (session) {
+      const mfa = await this.auth.prepareTotpLoginStep();
+      if (mfa.ok) {
+        await this.router.navigateByUrl('/auth/verificar-2fa');
+        return;
+      }
       await this.router.navigateByUrl('/app/companies');
       return;
     }

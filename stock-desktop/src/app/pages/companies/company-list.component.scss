@@ -97,6 +97,20 @@
 .company-list__name {
   font-weight: 600;
   color: #0f172a;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.company-list__role {
+  display: inline-flex;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #334155;
+  background: #e2e8f0;
 }
 
 .company-list__meta {

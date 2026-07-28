@@ -11,7 +11,7 @@
     <div class="page__head">
       <div>
         <h1 class="page__title">Resumen global</h1>
-        <p class="page__subtitle">{{ companyName() }}</p>
+        <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
       <label class="page__date">
         <span class="page__date-label">Fecha de referencia</span>
@@ -23,6 +23,7 @@
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
         <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
       </nav>
     }
 
@@ -35,6 +36,7 @@
       <p class="panel__help">
         Define qué cuenta como día/mes/año para esta empresa (ej. <code>America/Bogota</code>, <code>Europe/Madrid</code>, <code>UTC</code>).
       </p>
+      @if (canEditCompanySettings) {
       <div class="tz">
         <select #tzSelect class="tz__select" [value]="reportingTimezone()">
           @for (tz of timezoneOptionsForSelect(); track tz.value) {
@@ -45,6 +47,9 @@
           {{ savingTimezone() ? 'Guardando…' : 'Guardar zona horaria' }}
         </button>
       </div>
+      } @else {
+        <p class="page__muted">Zona actual: <strong>{{ reportingTimezone() }}</strong> (solo owner/admin pueden cambiarla).</p>
+      }
     </section>
 
     @if (loadingSummary()) {

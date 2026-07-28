@@ -22,16 +22,6 @@ export class RegisterComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
-  constructor() {
-    const oauthError = this.route.snapshot.queryParamMap.get('oauth_error');
-    if (oauthError) {
-      this.errorMessage.set(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
-      if (typeof history !== 'undefined') {
-        history.replaceState(null, '', '/auth/register');
-      }
-    }
-  }
-
   readonly form = this.fb.nonNullable.group(
     {
       email: ['', [Validators.required, Validators.email]],
@@ -40,6 +30,25 @@ export class RegisterComponent {
     },
     { validators: passwordMatchValidator },
   );
+
+  constructor() {
+    const oauthError = this.route.snapshot.queryParamMap.get('oauth_error');
+    if (oauthError) {
+      this.errorMessage.set(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+      if (typeof history !== 'undefined') {
+        history.replaceState(null, '', '/auth/register');
+      }
+    }
+    const email = this.route.snapshot.queryParamMap.get('email')?.trim();
+    if (email) {
+      this.form.controls.email.setValue(email);
+    }
+  }
+
+  get loginQueryParams(): Record<string, string> {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl ? { returnUrl } : {};
+  }
 
   async submit(): Promise<void> {
     this.errorMessage.set(null);
@@ -59,7 +68,12 @@ export class RegisterComponent {
       return;
     }
     if (data.session) {
-      await this.router.navigateByUrl('/app/companies');
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      const url =
+        returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')
+          ? returnUrl
+          : '/app/companies';
+      await this.router.navigateByUrl(url);
       return;
     }
     this.successMessage.set(

@@ -1,0 +1,168 @@
+<div class="page">
+  <a class="page__back" routerLink="/app/companies">← Mis empresas</a>
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else if (!companyName()) {
+    <div class="page__alert" role="alert">{{ errorMessage() ?? 'No se pudo cargar la empresa.' }}</div>
+  } @else {
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Equipo</h1>
+        <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel(myRole()) }}</p>
+      </div>
+    </div>
+
+    @if (companyId(); as cid) {
+      <nav class="tabs" aria-label="Secciones de la empresa">
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
+      </nav>
+    }
+
+    @if (errorMessage(); as err) {
+      <div class="page__alert" role="alert">{{ err }}</div>
+    }
+    @if (successMessage(); as ok) {
+      <div class="page__success" role="status">{{ ok }}</div>
+    }
+
+    @if (lastInviteLink(); as link) {
+      <div class="invite-link">
+        <p class="invite-link__label">
+          Invitación para <strong>{{ lastInviteEmail() }}</strong> (válida 7 días).
+          @if (sendingEmail()) {
+            Enviando email…
+          }
+        </p>
+        <code class="invite-link__url">{{ link }}</code>
+        <div class="invite-link__actions">
+          <button
+            type="button"
+            class="btn btn--primary"
+            (click)="sendEmailForLastInvite()"
+            [disabled]="sendingEmail()"
+          >
+            {{ sendingEmail() ? 'Enviando…' : 'Enviar por correo' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="openMailto()" [disabled]="sendingEmail()">
+            Abrir en mi correo
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="copyLink()">Copiar link</button>
+        </div>
+      </div>
+    }
+
+    @if (canManageTeam) {
+      <section class="panel">
+        <h2 class="panel__title">Invitar persona</h2>
+        <p class="panel__help">
+          Al invitar se intenta enviar el email automáticamente. Si aún no está configurado el envío en el servidor,
+          podés usar <strong>Abrir en mi correo</strong> o copiar el link. Quien no tenga cuenta puede registrarse con
+          ese email desde el link.
+        </p>
+        <form class="form" [formGroup]="inviteForm" (ngSubmit)="submitInvite()" novalidate>
+          <div class="form__row">
+            <label class="form__field form__field--grow">
+              <span class="form__label">Email</span>
+              <input class="form__input" type="email" formControlName="email" autocomplete="email" />
+            </label>
+            <label class="form__field">
+              <span class="form__label">Rol</span>
+              <select class="form__input" formControlName="role">
+                <option value="member">Miembro</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <button class="btn btn--primary" type="submit" [disabled]="saving() || sendingEmail()">Invitar</button>
+          </div>
+        </form>
+      </section>
+    } @else {
+      <p class="page__muted">Solo owner o admin pueden invitar o gestionar el equipo. Tu rol: {{ roleLabel(myRole() ?? 'member') }}.</p>
+    }
+
+    <section class="panel">
+      <h2 class="panel__title">Miembros</h2>
+      @if (members().length === 0) {
+        <p class="page__muted">Sin miembros.</p>
+      } @else {
+        <ul class="team-list">
+          @for (m of members(); track m.id) {
+            <li class="team-list__item">
+              <div class="team-list__main">
+                <span class="team-list__name">
+                  {{ m.email || m.user_id }}
+                  @if (m.user_id === myUserId()) {
+                    <span class="team-list__you">(vos)</span>
+                  }
+                </span>
+                <span class="team-list__meta">Desde {{ m.created_at | date: 'shortDate' }}</span>
+              </div>
+              <div class="team-list__actions">
+                @if (canChangeRole(m)) {
+                  <select
+                    class="form__input form__input--compact"
+                    [value]="m.role"
+                    (change)="onRoleChange(m, $event)"
+                    [disabled]="saving()"
+                    [attr.aria-label]="'Rol de ' + (m.email || m.user_id)"
+                  >
+                    <option value="owner">Owner</option>
+                    <option value="admin">Admin</option>
+                    <option value="member">Miembro</option>
+                  </select>
+                } @else {
+                  <span class="team-list__badge">{{ roleLabel(m.role) }}</span>
+                }
+                @if (canRemoveMember(m)) {
+                  <button
+                    type="button"
+                    class="btn btn--danger-ghost"
+                    (click)="removeMember(m)"
+                    [disabled]="saving()"
+                  >
+                    Quitar
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (canManageTeam) {
+      <section class="panel">
+        <h2 class="panel__title">Invitaciones pendientes</h2>
+        @if (invites().length === 0) {
+          <p class="page__muted">No hay invitaciones pendientes.</p>
+        } @else {
+          <ul class="team-list">
+            @for (inv of invites(); track inv.id) {
+              <li class="team-list__item">
+                <div class="team-list__main">
+                  <span class="team-list__name">{{ inv.email }}</span>
+                  <span class="team-list__meta">
+                    {{ roleLabel(inv.role) }} · vence {{ inv.expires_at | date: 'short' }}
+                  </span>
+                </div>
+                <div class="team-list__actions">
+                  <button type="button" class="btn btn--primary" (click)="emailInvite(inv)" [disabled]="sendingEmail()">
+                    Enviar mail
+                  </button>
+                  <button type="button" class="btn btn--ghost" (click)="copyInviteToken(inv)">Copiar link</button>
+                  <button type="button" class="btn btn--danger-ghost" (click)="revokeInvite(inv)" [disabled]="saving()">
+                    Revocar
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

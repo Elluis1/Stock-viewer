@@ -4,11 +4,9 @@
     <p class="home__lead">
       Gestioná empresas, productos y stock. Iniciá sesión para ver tus datos.
     </p>
-    @if (session(); as s) {
-      <p class="home__actions">
-        <a class="home__cta" routerLink="/app/companies">Ir a mis empresas</a>
-      </p>
-    }
+    <p class="home__actions">
+      <a class="home__cta" routerLink="/auth/login">Iniciar sesión</a>
+    </p>
     <ul class="home__list">
       <li>Autenticación con correo o Google.</li>
       <li>Varias empresas por usuario y productos por empresa.</li>

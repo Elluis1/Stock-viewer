@@ -1,8 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CompanyAccessService } from '../../core/company-access.service';
 import { SupabaseService } from '../../core/supabase.service';
-import type { CompanyRow } from '../../models/stock.types';
+import type { CompanyMemberRole, CompanyRow } from '../../models/stock.types';
+
+type CompanyListItem = CompanyRow & { role: CompanyMemberRole | null };
 
 @Component({
   selector: 'app-company-list',
@@ -12,8 +15,9 @@ import type { CompanyRow } from '../../models/stock.types';
 })
 export class CompanyListComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly access = inject(CompanyAccessService);
 
-  readonly companies = signal<CompanyRow[]>([]);
+  readonly companies = signal<CompanyListItem[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
 
@@ -21,18 +25,28 @@ export class CompanyListComponent implements OnInit {
     await this.load();
   }
 
+  roleLabel(role: CompanyMemberRole | null): string {
+    return this.access.roleLabel(role);
+  }
+
   async load(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
-    const { data, error } = await this.supabase.client
-      .from('companies')
-      .select('id,name,created_at')
-      .order('created_at', { ascending: false });
+    const [companiesRes, roles] = await Promise.all([
+      this.supabase.client.from('companies').select('id,name,created_at').order('created_at', { ascending: false }),
+      this.access.getMyRolesByCompany(),
+    ]);
     this.loading.set(false);
-    if (error) {
-      this.errorMessage.set(error.message);
+    if (companiesRes.error) {
+      this.errorMessage.set(companiesRes.error.message);
       return;
     }
-    this.companies.set((data ?? []) as CompanyRow[]);
+    const rows = (companiesRes.data ?? []) as CompanyRow[];
+    this.companies.set(
+      rows.map((c) => ({
+        ...c,
+        role: roles.get(c.id) ?? null,
+      })),
+    );
   }
 }

@@ -1,0 +1,40 @@
+<div class="wrap">
+  <h1 class="title">Verificación en dos pasos</h1>
+  <p class="lead">Tu cuenta tiene 2FA activo. Ingresá el código de 6 dígitos de tu app de autenticación.</p>
+
+  @if (errorMessage(); as err) {
+    <div class="auth-alert" role="alert">{{ err }}</div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Comprobando sesión…</p>
+  } @else {
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="auth-field">
+        <span class="auth-label">Código 2FA</span>
+        <input
+          class="auth-input"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          autocomplete="one-time-code"
+          formControlName="code"
+        />
+        @if (form.controls.code.touched && form.controls.code.hasError('required')) {
+          <span class="auth-error">Ingresá el código.</span>
+        }
+        @if (form.controls.code.touched && form.controls.code.hasError('pattern')) {
+          <span class="auth-error">6 números.</span>
+        }
+      </label>
+      <button class="auth-submit" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Verificando…' : 'Continuar' }}
+      </button>
+      <p class="auth-hint auth-hint--center">
+        <button type="button" class="auth-link" [disabled]="submitting()" (click)="cancel()">Cancelar e iniciar con otra cuenta</button>
+      </p>
+    </form>
+  }
+
+  <p class="foot"><a routerLink="/auth/login">Volver al inicio de sesión</a></p>
+</div>

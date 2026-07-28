@@ -3,8 +3,9 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CompanyAccessService } from '../../core/company-access.service';
 import { SupabaseService } from '../../core/supabase.service';
-import type { InventorySnapshotRow, MovementListRow } from '../../models/stock.types';
+import type { CompanyMemberRole, InventorySnapshotRow, MovementListRow } from '../../models/stock.types';
 import { parseNonNegativeNumber, parsePositiveNumber } from '../../shared/form-numbers';
 
 @Component({
@@ -15,12 +16,14 @@ import { parseNonNegativeNumber, parsePositiveNumber } from '../../shared/form-n
 })
 export class CompanyMovesComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly access = inject(CompanyAccessService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly companyId = signal<string | null>(null);
   readonly companyName = signal<string | null>(null);
+  readonly myRole = signal<CompanyMemberRole | null>(null);
   readonly inventory = signal<InventorySnapshotRow[]>([]);
   readonly movements = signal<MovementListRow[]>([]);
   readonly dayStr = signal(this.isoToday());
@@ -63,6 +66,14 @@ export class CompanyMovesComponent implements OnInit {
 
   /** Ingresos por ventas menos gasto en compras (mismo día). */
   readonly dayBalanceNet = computed(() => this.daySalesRevenue() - this.dayPurchasesSpend());
+
+  get canOperateStock(): boolean {
+    return this.access.canOperateStock(this.myRole());
+  }
+
+  roleLabel(): string {
+    return this.access.roleLabel(this.myRole());
+  }
 
   readonly saleForm = this.fb.nonNullable.group({
     productId: ['', Validators.required],
@@ -119,15 +130,17 @@ export class CompanyMovesComponent implements OnInit {
   private async loadCompanyAndInventory(companyId: string): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set(null);
-    const [companyRes, invRes] = await Promise.all([
+    const [companyRes, invRes, role] = await Promise.all([
       this.supabase.client.from('companies').select('name').eq('id', companyId).maybeSingle(),
       this.supabase.client
         .from('product_inventory_snapshot')
         .select('*')
         .eq('company_id', companyId)
         .order('name'),
+      this.access.getMyRole(companyId),
     ]);
     this.loading.set(false);
+    this.myRole.set(role);
     if (companyRes.error) {
       this.errorMessage.set(companyRes.error.message);
       return;
@@ -393,6 +406,10 @@ export class CompanyMovesComponent implements OnInit {
   async recordSale(): Promise<void> {
     const cid = this.companyId();
     if (!cid) {
+      return;
+    }
+    if (!this.canOperateStock) {
+      this.errorMessage.set('No tenés permiso para registrar ventas.');
       return;
     }
     this.errorMessage.set(null);

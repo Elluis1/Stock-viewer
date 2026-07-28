@@ -11,7 +11,7 @@
     <div class="page__head">
       <div>
         <h1 class="page__title">Ventas y movimientos del día</h1>
-        <p class="page__subtitle">{{ companyName() }}</p>
+        <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
       <label class="page__date">
         <span class="page__date-label">Día</span>
@@ -23,6 +23,7 @@
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
         <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
         <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
       </nav>
     }
 
@@ -30,6 +31,7 @@
       <div class="page__alert" role="alert">{{ errorMessage() }}</div>
     }
 
+    @if (canOperateStock) {
     <section class="panel">
       <h2 class="panel__title">Registrar venta</h2>
       <p class="panel__help">
@@ -104,6 +106,9 @@
         </form>
       }
     </section>
+    } @else {
+      <p class="page__muted">No tenés permiso para registrar ventas en esta empresa.</p>
+    }
 
     <section class="panel panel--table">
       <h2 class="panel__title">Entradas y salidas del día</h2>

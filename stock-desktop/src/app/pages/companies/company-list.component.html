@@ -23,13 +23,19 @@
       @for (c of companies(); track c.id) {
         <li class="company-list__item">
           <div class="company-list__main">
-            <span class="company-list__name">{{ c.name }}</span>
+            <span class="company-list__name">
+              {{ c.name }}
+              @if (c.role) {
+                <span class="company-list__role">{{ roleLabel(c.role) }}</span>
+              }
+            </span>
             <span class="company-list__meta">Creada {{ c.created_at | date: 'short' }}</span>
           </div>
           <div class="company-list__actions">
             <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'products']">Inventario</a>
             <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'movimientos']">Movimientos</a>
             <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'resumen']">Resumen</a>
+            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'equipo']">Equipo</a>
           </div>
         </li>
       }

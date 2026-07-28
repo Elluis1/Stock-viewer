@@ -5,6 +5,47 @@ export type CompanyRow = {
   reporting_timezone?: string;
 };
 
+export type CompanyMemberRole = 'owner' | 'admin' | 'member';
+
+export type CompanyMemberRow = {
+  id: string;
+  company_id: string;
+  user_id: string;
+  role: CompanyMemberRole;
+  email: string | null;
+  created_at: string;
+};
+
+export type CompanyInviteStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+
+export type CompanyInviteRow = {
+  id: string;
+  company_id: string;
+  email: string;
+  role: 'admin' | 'member';
+  token: string;
+  status: CompanyInviteStatus;
+  expires_at: string;
+  created_at: string;
+};
+
+export type CreateInviteResult = {
+  id: string;
+  token: string;
+  email: string;
+  role: 'admin' | 'member';
+  expires_at: string;
+};
+
+export type InvitePreview = {
+  email: string;
+  role: 'admin' | 'member';
+  status: CompanyInviteStatus;
+  expires_at: string;
+  company_name: string | null;
+  expired: boolean;
+};
+
 export type ProductRow = {
   id: string;
   company_id: string;

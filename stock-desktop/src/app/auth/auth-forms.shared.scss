@@ -63,6 +63,28 @@
   color: #94a3b8;
 }
 
+.auth-hint--center {
+  text-align: center;
+  margin-top: 0.35rem;
+}
+
+.auth-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .auth-error {
   font-size: 0.75rem;
   color: #b91c1c;

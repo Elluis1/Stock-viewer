@@ -1,0 +1,99 @@
+<div class="page">
+  <div class="page__breadcrumbs">
+    <a routerLink="/app/companies">← Mis empresas</a>
+  </div>
+
+  <div class="page__head">
+    <div>
+      <h1 class="page__title">Seguridad</h1>
+      <p class="page__subtitle">Autenticación en dos pasos (2FA) con app tipo Google Authenticator.</p>
+    </div>
+  </div>
+
+  @if (errorMessage(); as err) {
+    <div class="page__alert" role="alert">{{ err }}</div>
+  }
+  @if (successMessage(); as ok) {
+    <div class="auth-success page__success" role="status">{{ ok }}</div>
+  }
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else {
+    <section class="panel">
+      <h2 class="panel__title">Segundo factor (TOTP)</h2>
+      <p class="panel__help">
+        Es un <strong>segundo factor para esta app (Supabase)</strong>, distinto del 2FA de tu cuenta Gmail. Tenés que agregar en la app el <strong>nuevo</strong> código QR (o la clave manual) que aparece acá abajo al activar; los códigos viejos de Google no sirven.
+      </p>
+
+      @if (verifiedFactor(); as vf) {
+        <p class="panel__status">
+          Estado: <strong>activo</strong>
+          @if (vf.friendly_name) {
+            <span class="panel__muted">({{ vf.friendly_name }})</span>
+          }
+        </p>
+        <button type="button" class="btn btn--danger" [disabled]="saving()" (click)="disableMfa()">
+          {{ saving() ? 'Procesando…' : 'Desactivar 2FA' }}
+        </button>
+      } @else {
+        <p class="panel__status">Estado: <strong>inactivo</strong></p>
+
+        @if (stuckUnverifiedFactorId()) {
+          <p class="panel__help">
+            Hay un registro de 2FA empezado y sin confirmar. Cancelalo para poder activar 2FA de nuevo.
+          </p>
+          <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="cancelStuckEnrollment()">
+            {{ saving() ? 'Procesando…' : 'Cancelar registro pendiente' }}
+          </button>
+        } @else if (!enrollOpen()) {
+          <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="startEnroll()">
+            {{ saving() ? 'Preparando…' : 'Activar 2FA' }}
+          </button>
+        } @else {
+          <div class="enroll">
+            <p class="panel__help">
+              Escaneá el QR con la app (botón “+” o “Agregar cuenta”). Después tocá <strong>Confirmar y activar</strong> con el código de 6 dígitos que muestra <strong>esa</strong> entrada nueva (no el de otras cuentas).
+            </p>
+            @if (qrSafeUrl(); as qr) {
+              <div class="enroll__qr">
+                <img [src]="qr" alt="Código QR para configurar el autenticador" width="180" height="180" />
+              </div>
+            }
+            @if (totpSecret(); as sec) {
+              <details class="enroll__secret">
+                <summary>Entrada manual (si no podés escanear el QR)</summary>
+                <p class="enroll__secret-text">
+                  Clave:
+                  <code>{{ sec }}</code>
+                </p>
+              </details>
+            }
+            <form class="enroll__form" [formGroup]="confirmForm" (ngSubmit)="confirmEnroll()" novalidate>
+              <label class="auth-field">
+                <span class="auth-label">Código de 6 dígitos</span>
+                <input class="auth-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" formControlName="code" />
+                @if (confirmForm.controls.code.touched && confirmForm.controls.code.hasError('required')) {
+                  <span class="auth-error">Obligatorio.</span>
+                }
+                @if (confirmForm.controls.code.touched && confirmForm.controls.code.hasError('pattern')) {
+                  <span class="auth-error">Tiene que ser exactamente 6 números.</span>
+                }
+              </label>
+              <div class="enroll__actions">
+                <button class="btn btn--primary" type="submit" [disabled]="saving()">
+                  {{ saving() ? 'Verificando…' : 'Confirmar y activar' }}
+                </button>
+                <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="cancelPending()">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        }
+      }
+    </section>
+
+    <p class="page__note">
+      En Supabase: <strong>Authentication → Multi-factor</strong>: TOTP habilitado y verificación <strong>no</strong> desactivada (si está “Verification disabled”, nunca va a aceptar el código). Si entrás con Google, al volver a entrar te pediremos este 2FA si lo activaste.
+    </p>
+  }
+</div>
