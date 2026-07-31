@@ -135,8 +135,7 @@ Deno.serve(async (req) => {
       return json({ ok: true, method: "resend" });
     }
 
-    // Sin Resend: para usuarios NUEVOS, el invite de Auth de Supabase manda mail
-    // y redirige al link de la empresa.
+    // 1) Usuario nuevo: invite de Auth (mail de "invitación a la app")
     const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(
       invite.email,
       { redirectTo: inviteUrl },
@@ -147,23 +146,44 @@ Deno.serve(async (req) => {
     }
 
     const msg = (inviteErr.message || "").toLowerCase();
-    if (
+    const alreadyExists =
       msg.includes("already") ||
       msg.includes("registered") ||
-      msg.includes("exists")
-    ) {
+      msg.includes("exists");
+
+    if (!alreadyExists) {
       return json({
         ok: false,
-        error: "user_already_registered",
+        error: "auth_invite_failed",
+        message: inviteErr.message,
+      });
+    }
+
+    // 2) Usuario ya registrado: magic link que redirige a la página de aceptar invite
+    const mailer = createClient(supabaseUrl, anonKey);
+    const { error: otpErr } = await mailer.auth.signInWithOtp({
+      email: invite.email,
+      options: {
+        emailRedirectTo: inviteUrl,
+        shouldCreateUser: false,
+      },
+    });
+
+    if (otpErr) {
+      return json({
+        ok: false,
+        error: "otp_failed",
         message:
-          "Esa persona ya tiene cuenta. Usá «Abrir en mi correo» o copiá el link.",
+          otpErr.message ||
+          "No se pudo enviar el mail. Copiá el link o abrí tu correo.",
       });
     }
 
     return json({
-      ok: false,
-      error: "auth_invite_failed",
-      message: inviteErr.message,
+      ok: true,
+      method: "supabase_magic_link",
+      message:
+        "Se envió un enlace de acceso al correo. Al abrirlo llega a la página de la invitación.",
     });
   } catch (e) {
     return json({ ok: false, error: "server_error", message: String(e) }, 500);

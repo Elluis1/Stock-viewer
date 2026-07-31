@@ -1,14 +1,18 @@
-<div class="shell">
+<div
+  class="shell"
+  [class.shell--marketing]="isMarketing()"
+  [class.shell--home]="isHome() && !session()"
+>
   <header class="shell__header">
     <a class="shell__brand" routerLink="/">Stock desktop</a>
     <nav class="shell__nav">
       @if (session(); as _s) {
         <a routerLink="/app/companies">Mis empresas</a>
-        <a routerLink="/app/seguridad">Seguridad (2FA)</a>
+        <a routerLink="/app/seguridad">Seguridad</a>
         <button type="button" class="shell__signout" (click)="signOut()">Salir</button>
       } @else {
         <a routerLink="/auth/login">Entrar</a>
-        <a routerLink="/auth/register" class="shell__nav-cta">Registrarse</a>
+        <a routerLink="/auth/register" class="shell__nav-cta">Crear cuenta</a>
       }
     </nav>
   </header>

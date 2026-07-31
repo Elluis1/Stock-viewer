@@ -47,9 +47,9 @@
           >
             {{ sendingEmail() ? 'Enviando…' : 'Enviar por correo' }}
           </button>
-          <button type="button" class="btn btn--ghost" (click)="openMailto()" [disabled]="sendingEmail()">
-            Abrir en mi correo
-          </button>
+          @if (lastMailto(); as mailto) {
+            <a class="btn btn--ghost" [href]="mailto">Abrir en mi correo</a>
+          }
           <button type="button" class="btn btn--ghost" (click)="copyLink()">Copiar link</button>
         </div>
       </div>

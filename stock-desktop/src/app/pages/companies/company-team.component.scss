@@ -124,6 +124,8 @@
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .btn:disabled {

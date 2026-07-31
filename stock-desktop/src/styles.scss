@@ -9,14 +9,12 @@ body {
   margin: 0;
   padding: 0;
   font-family:
-    Inter,
+    "Source Sans 3",
     "Segoe UI",
-    Roboto,
     system-ui,
-    -apple-system,
     sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  color: #1a2332;
+  background: #f3f1ec;
 }
 
 body {
@@ -52,7 +50,10 @@ body {
   font-weight: 600;
   text-decoration: none;
   color: #475569;
-  transition: all 140ms ease;
+  transition:
+    color 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
 }
 
 .tabs__item:hover {
@@ -61,7 +62,7 @@ body {
 }
 
 .tabs__item--active {
-  color: #0b3aa4;
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  color: #1a2332;
+  background: #eef2f0;
+  border-color: #c5d0c8;
 }

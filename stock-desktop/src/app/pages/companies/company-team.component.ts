@@ -202,7 +202,11 @@ export class CompanyTeamComponent implements OnInit {
     if (!error && payload?.ok) {
       if (payload.method === 'supabase_auth_invite') {
         this.successMessage.set(
-          `Email de invitación enviado a ${email} (cuenta nueva). Al aceptar el mail de Supabase va a poder unirse al equipo.`,
+          `Email enviado a ${email}. Es un mail de invitación de Supabase; al abrirlo llega a aceptar la invitación.`,
+        );
+      } else if (payload.method === 'supabase_magic_link') {
+        this.successMessage.set(
+          `Email enviado a ${email}. Es un enlace de acceso; al abrirlo llega a la página de la invitación para aceptar.`,
         );
       } else {
         this.successMessage.set(`Email enviado a ${email}.`);
@@ -210,18 +214,9 @@ export class CompanyTeamComponent implements OnInit {
       return;
     }
 
-    const code = payload?.error;
     const detail = payload?.message || error?.message || 'sin envío automático';
-
-    if (code === 'user_already_registered') {
-      this.successMessage.set(
-        `${email} ya tiene cuenta. Copiá el link o usá «Abrir en mi correo» para enviárselo.`,
-      );
-      return;
-    }
-
     this.successMessage.set(
-      `Invitación lista para ${email}. No se pudo enviar automático (${detail}). Probá «Abrir en mi correo» o copiá el link.`,
+      `Invitación lista para ${email}. No se pudo enviar automático (${detail}). Usá «Abrir en mi correo» o «Copiar link».`,
     );
   }
 
@@ -247,13 +242,6 @@ export class CompanyTeamComponent implements OnInit {
     }
     this.successMessage.set('Invitación revocada.');
     await this.load();
-  }
-
-  openMailto(): void {
-    const mailto = this.lastMailto();
-    if (mailto) {
-      this.team.openMailto(mailto);
-    }
   }
 
   async copyInviteToken(invite: CompanyInviteRow): Promise<void> {

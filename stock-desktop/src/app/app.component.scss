@@ -2,6 +2,12 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  --shell-ink: #1a2332;
+  --shell-muted: #5c6b7a;
+  --shell-accent: #c4782a;
+  --shell-accent-deep: #a35f1c;
+  --shell-surface: #f3f1ec;
+  --shell-line: rgb(26 35 50 / 12%);
 }
 
 .shell__header {
@@ -12,17 +18,20 @@
   padding: 0.75rem 1.25rem;
   border-bottom: 1px solid #e2e2e2;
   background: #fafafa;
+  z-index: 20;
 }
 
 .shell__brand {
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #0f172a;
+  font-family: Syne, "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+  color: var(--shell-ink);
   text-decoration: none;
 }
 
 .shell__brand:hover {
-  text-decoration: underline;
+  color: var(--shell-accent-deep);
 }
 
 .shell__nav {
@@ -44,17 +53,19 @@
 }
 
 .shell__nav-cta {
-  padding: 0.35rem 0.65rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 8px;
-  background: #2563eb;
+  background: var(--shell-accent);
   color: #fff !important;
   text-decoration: none !important;
   font-weight: 600 !important;
+  transition: background 160ms ease, transform 160ms ease;
 }
 
 .shell__nav-cta:hover {
-  filter: brightness(1.05);
+  background: var(--shell-accent-deep);
   text-decoration: none !important;
+  transform: translateY(-1px);
 }
 
 .shell__signout {
@@ -75,4 +86,36 @@
 .shell__main {
   flex: 1;
   padding: 1.25rem;
+}
+
+/* Marketing / auth: shell liviano */
+.shell--marketing .shell__header {
+  border-bottom-color: var(--shell-line);
+  background: rgb(243 241 236 / 88%);
+  backdrop-filter: blur(10px);
+}
+
+.shell--marketing .shell__main {
+  padding: 0;
+}
+
+/* Home no logueada: header sobre el hero */
+.shell--home .shell__header {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+.shell--home .shell__brand {
+  color: var(--shell-ink);
+}
+
+.shell--home .shell__nav a:not(.shell__nav-cta) {
+  color: var(--shell-muted);
+}
+
+.shell--home .shell__nav a:not(.shell__nav-cta):hover {
+  color: var(--shell-ink);
 }

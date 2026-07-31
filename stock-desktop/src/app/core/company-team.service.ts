@@ -99,15 +99,23 @@ export class CompanyTeamService {
     return `mailto:${params.toEmail}?subject=${subject}&body=${body}`;
   }
 
-  /** Abre mailto de forma fiable (mejor que window.open en Windows). */
+  /** Abre mailto de forma fiable en Windows / Netlify. */
   openMailto(mailto: string): void {
-    const a = document.createElement('a');
-    a.href = mailto;
-    a.rel = 'noopener';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (!mailto) {
+      return;
+    }
+    // location.href es más fiable que click() en un <a> oculto
+    try {
+      globalThis.location.href = mailto;
+    } catch {
+      const a = document.createElement('a');
+      a.href = mailto;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
   }
 
   asMembers(data: unknown): CompanyMemberRow[] {

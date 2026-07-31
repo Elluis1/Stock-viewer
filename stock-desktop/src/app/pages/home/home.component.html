@@ -1,15 +1,134 @@
-<section class="home">
-  <div class="panel">
-    <h1 class="home__title">Stock</h1>
-    <p class="home__lead">
-      Gestioná empresas, productos y stock. Iniciá sesión para ver tus datos.
-    </p>
-    <p class="home__actions">
-      <a class="home__cta" routerLink="/auth/login">Iniciar sesión</a>
-    </p>
-    <ul class="home__list">
-      <li>Autenticación con correo o Google.</li>
-      <li>Varias empresas por usuario y productos por empresa.</li>
-    </ul>
-  </div>
+<section class="landing">
+  <section class="hero" aria-label="Presentación">
+    <div class="hero__copy">
+      <p class="hero__brand">Stock desktop</p>
+      <h1 class="hero__headline">Controlá el stock de tu negocio en un solo lugar</h1>
+      <p class="hero__lead">
+        Empresas, productos, ventas e inventario compartido con tu equipo.
+      </p>
+      <div class="hero__actions">
+        <a class="hero__cta hero__cta--primary" routerLink="/auth/register">Crear cuenta</a>
+        <a class="hero__cta hero__cta--ghost" routerLink="/auth/login">Entrar</a>
+      </div>
+    </div>
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="mock">
+        <div class="mock__chrome">
+          <span class="mock__dot"></span>
+          <span class="mock__dot"></span>
+          <span class="mock__dot"></span>
+          <span class="mock__title">Inventario</span>
+        </div>
+        <div class="mock__toolbar">
+          <span class="mock__chip">12 productos</span>
+          <span class="mock__chip mock__chip--accent">Stock al día</span>
+        </div>
+        <div class="mock__table">
+          <div class="mock__row mock__row--head">
+            <span>Producto</span>
+            <span>Stock</span>
+            <span>Precio</span>
+          </div>
+          <div class="mock__row">
+            <span>Resina epoxi 1L</span>
+            <span>48</span>
+            <span>$12.500</span>
+          </div>
+          <div class="mock__row">
+            <span>Guantes nitrilo</span>
+            <span>320</span>
+            <span>$890</span>
+          </div>
+          <div class="mock__row">
+            <span>Lija grano 120</span>
+            <span>86</span>
+            <span>$450</span>
+          </div>
+          <div class="mock__row mock__row--highlight">
+            <span>Catalizador 250ml</span>
+            <span>12</span>
+            <span>$6.200</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section landing-section--value">
+    <div class="landing-section__inner">
+      <h2 class="landing-section__title">Qué podés hacer</h2>
+      <p class="landing-section__lead">
+        Todo lo necesario para llevar el inventario sin planillas sueltas.
+      </p>
+      <ul class="value-list">
+        <li class="value-list__item">
+          <span class="value-list__label">Productos</span>
+          <span class="value-list__text">Cargá catálogo con costos, precios y stock por empresa.</span>
+        </li>
+        <li class="value-list__item">
+          <span class="value-list__label">Compras y ventas</span>
+          <span class="value-list__text">Registrá movimientos y mantené el inventario al día.</span>
+        </li>
+        <li class="value-list__item">
+          <span class="value-list__label">Resumen</span>
+          <span class="value-list__text">Mirá ingresos, gastos y ganancia bruta por período.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="landing-section landing-section--team">
+    <div class="landing-section__inner landing-section__inner--split">
+      <div class="landing-section__copy">
+        <h2 class="landing-section__title">Tu equipo, en el mismo stock</h2>
+        <p class="landing-section__lead">
+          Invitá empleados a una empresa concreta para que gestionen inventario y ventas sin mezclar datos.
+        </p>
+      </div>
+      <div class="team-mock" aria-hidden="true">
+        <div class="team-mock__row">
+          <span class="team-mock__avatar"></span>
+          <span class="team-mock__meta">
+            <span class="team-mock__name">Ana · Owner</span>
+            <span class="team-mock__mail">ana@negocio.com</span>
+          </span>
+        </div>
+        <div class="team-mock__row">
+          <span class="team-mock__avatar team-mock__avatar--2"></span>
+          <span class="team-mock__meta">
+            <span class="team-mock__name">Luis · Miembro</span>
+            <span class="team-mock__mail">luis@negocio.com</span>
+          </span>
+        </div>
+        <div class="team-mock__row team-mock__row--invite">
+          <span class="team-mock__plus">+</span>
+          <span class="team-mock__meta">
+            <span class="team-mock__name">Invitar al equipo</span>
+            <span class="team-mock__mail">Link por correo · 7 días</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section landing-section--trust">
+    <div class="landing-section__inner">
+      <h2 class="landing-section__title">Acceso seguro</h2>
+      <p class="landing-section__lead">
+        Entrá con correo o Google y activá autenticación en dos pasos cuando lo necesites.
+      </p>
+    </div>
+  </section>
+
+  <section class="landing-section landing-section--cta">
+    <div class="landing-section__inner landing-section__inner--cta">
+      <h2 class="landing-section__title">Empezá a ordenar tu stock</h2>
+      <p class="landing-section__lead">Creá tu cuenta y sumá tu primera empresa en minutos.</p>
+      <div class="hero__actions hero__actions--center">
+        <a class="hero__cta hero__cta--primary" routerLink="/auth/register">Crear cuenta</a>
+        <a class="hero__cta hero__cta--ghost" routerLink="/auth/login">Entrar</a>
+      </div>
+    </div>
+  </section>
 </section>
