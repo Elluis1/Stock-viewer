@@ -41,8 +41,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Env / claves
+# Env locales con secretos (no versionar)
 .env
 .env.*
-**/environment.production.ts
-!**/environment.production.ts.example
+# environment.production.ts SÍ se versiona (solo URL + anon key públicas de Supabase)
+# Copiá desde .example si falta en un clone viejo:
+# **/environment.production.ts.example
