@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Stock desktop — Controlá el stock de tu negocio</title>
+  <title>Stock desktop — El inventario de tu negocio, siempre al día</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta
@@ -16,6 +16,19 @@
     href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@600;700;800&display=swap"
     rel="stylesheet"
   >
+  <script>
+    (function () {
+      try {
+        var p = localStorage.getItem('stock-desktop-theme') || 'system';
+        var dark =
+          p === 'dark' ||
+          (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

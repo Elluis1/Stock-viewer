@@ -4,11 +4,14 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: linear-gradient(180deg, #f4f6fb 0%, #eef1f8 100%);
+  background:
+    radial-gradient(ellipse 60% 45% at 20% 10%, var(--glow), transparent 55%),
+    linear-gradient(165deg, var(--mist) 0%, var(--paper) 100%);
 }
 
 .auth-callback__text {
   margin: 0;
-  font-size: 0.95rem;
-  color: #475569;
+  font-size: 0.98rem;
+  color: var(--muted);
+  font-weight: 600;
 }

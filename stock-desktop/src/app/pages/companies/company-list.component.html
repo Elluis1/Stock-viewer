@@ -1,11 +1,14 @@
-<div class="page">
-  <div class="page__head">
-    <div>
-      <h1 class="page__title">Mis empresas</h1>
-      <p class="page__lead">Creá una empresa y después agregá productos y movimientos de stock.</p>
-    </div>
-    <a class="page__primary" routerLink="/app/companies/new">Nueva empresa</a>
-  </div>
+<div class="page hub">
+  <header class="hub-intro">
+    <h1 class="page__title">
+      @if (displayName(); as name) {
+        Hola, {{ name }}
+      } @else {
+        Mis empresas
+      }
+    </h1>
+    <p class="page__lead">Resumen de tu negocio y acceso rápido a cada empresa.</p>
+  </header>
 
   @if (errorMessage(); as err) {
     <div class="page__alert" role="alert">{{ err }}</div>
@@ -13,32 +16,208 @@
 
   @if (loading()) {
     <p class="page__muted">Cargando…</p>
-  } @else if (companies().length === 0) {
-    <div class="page__empty">
-      <p>Todavía no tenés empresas.</p>
-      <a routerLink="/app/companies/new" class="page__primary">Crear la primera</a>
-    </div>
   } @else {
-    <ul class="company-list">
-      @for (c of companies(); track c.id) {
-        <li class="company-list__item">
-          <div class="company-list__main">
-            <span class="company-list__name">
-              {{ c.name }}
-              @if (c.role) {
-                <span class="company-list__role">{{ roleLabel(c.role) }}</span>
-              }
-            </span>
-            <span class="company-list__meta">Creada {{ c.created_at | date: 'short' }}</span>
-          </div>
-          <div class="company-list__actions">
-            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'products']">Inventario</a>
-            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'movimientos']">Movimientos</a>
-            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'resumen']">Resumen</a>
-            <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'equipo']">Equipo</a>
-          </div>
-        </li>
+    @if (companies().length > 0) {
+      <div class="hub-dash" aria-label="Resumen">
+        <div class="hub-dash__item">
+          <span class="hub-dash__label">Empresas</span>
+          <span class="hub-dash__value">{{ totals().companies }}</span>
+        </div>
+        <div class="hub-dash__item">
+          <span class="hub-dash__label">Productos</span>
+          <span class="hub-dash__value">{{ totals().products }}</span>
+        </div>
+        <div class="hub-dash__item">
+          <span class="hub-dash__label">Entradas hoy</span>
+          <span class="hub-dash__value">{{ totals().movesInToday }}</span>
+        </div>
+        <div class="hub-dash__item">
+          <span class="hub-dash__label">Salidas hoy</span>
+          <span class="hub-dash__value">{{ totals().movesOutToday }}</span>
+        </div>
+      </div>
+    }
+
+    <nav class="hub-quick" aria-label="Accesos rápidos">
+      <a class="hub-tile" routerLink="/app/companies/new">
+        <span class="hub-tile__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="hub-tile__text">
+          <span class="hub-tile__title">Nueva empresa</span>
+          <span class="hub-tile__hint">Crear workspace</span>
+        </span>
+      </a>
+      <a class="hub-tile" routerLink="/app/seguridad">
+        <span class="hub-tile__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="hub-tile__text">
+          <span class="hub-tile__title">Seguridad</span>
+          <span class="hub-tile__hint">2FA y cuenta</span>
+        </span>
+      </a>
+      @if (soleCompany(); as sole) {
+        <a class="hub-tile" [routerLink]="['/app/companies', sole.id, 'products']">
+          <span class="hub-tile__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7h16v12H4z" />
+              <path d="M8 7V5h8v2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="hub-tile__text">
+            <span class="hub-tile__title">Inventario</span>
+            <span class="hub-tile__hint">{{ sole.name }}</span>
+          </span>
+        </a>
+        <a class="hub-tile" [routerLink]="['/app/companies', sole.id, 'resumen']">
+          <span class="hub-tile__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19V5M4 19h16" stroke-linecap="round" />
+              <path d="M8 15v-4M12 15V8M16 15v-6" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="hub-tile__text">
+            <span class="hub-tile__title">Resumen</span>
+            <span class="hub-tile__hint">Reportes del día</span>
+          </span>
+        </a>
       }
-    </ul>
+    </nav>
+
+    @if (companies().length === 0) {
+      <div class="hub-empty">
+        <h2 class="hub-empty__title">Todavía no tenés empresas</h2>
+        <p class="hub-empty__lead">En tres pasos arrancás el inventario:</p>
+        <ol class="hub-empty__steps">
+          <li><span class="hub-empty__num">01</span> Creá tu primera empresa</li>
+          <li><span class="hub-empty__num">02</span> Cargá productos al catálogo</li>
+          <li><span class="hub-empty__num">03</span> Registrá el primer movimiento</li>
+        </ol>
+        <a routerLink="/app/companies/new" class="page__primary">Crear la primera empresa</a>
+      </div>
+    } @else {
+      <section class="hub-section" aria-labelledby="hub-companies-title">
+        <div class="hub-section__head">
+          <div>
+            <h2 id="hub-companies-title" class="hub-section__title">Tus empresas</h2>
+            <p class="hub-section__meta">{{ filteredCompanies().length }} de {{ companies().length }}</p>
+          </div>
+          <a class="page__primary page__primary--compact" routerLink="/app/companies/new">+ Nueva empresa</a>
+        </div>
+
+        @if (showSearch() || companies().length > 1) {
+          <div class="hub-toolbar">
+            @if (showSearch()) {
+              <label class="hub-search">
+                <span class="visually-hidden">Buscar empresa</span>
+                <svg class="hub-search__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+                </svg>
+                <input
+                  class="hub-search__input"
+                  type="search"
+                  placeholder="Buscar empresa…"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="onSearchInput($event)"
+                />
+              </label>
+            }
+            <div class="hub-filters" #filtersEl role="group" aria-label="Filtrar empresas">
+              <span
+                class="hub-filters__thumb"
+                aria-hidden="true"
+                [style.transform]="filterThumb().transform"
+                [style.width]="filterThumb().width"
+              ></span>
+              <button type="button" class="hub-filter" [class.is-active]="filter() === 'all'" (click)="setFilter('all')">
+                Todas
+              </button>
+              <button type="button" class="hub-filter" [class.is-active]="filter() === 'owned'" (click)="setFilter('owned')">
+                Propias
+              </button>
+              <button
+                type="button"
+                class="hub-filter"
+                [class.is-active]="filter() === 'shared'"
+                (click)="setFilter('shared')"
+              >
+                Compartidas
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (filteredCompanies().length === 0) {
+          <p class="page__muted">Ninguna empresa coincide con el filtro.</p>
+        } @else {
+          <ul class="company-list" [attr.data-filter]="filter()">
+            @for (c of filteredCompanies(); track companyTrack(c)) {
+              <li class="company-list__item">
+                <div class="company-list__identity">
+                  <span class="company-list__avatar" [attr.data-tone]="avatarTone(c.name)" aria-hidden="true">
+                    {{ companyInitial(c.name) }}
+                  </span>
+                  <div class="company-list__main">
+                    <span class="company-list__name">
+                      {{ c.name }}
+                      @if (c.role) {
+                        <span class="company-list__role" [class.company-list__role--owner]="c.role === 'owner'">
+                          {{ roleLabel(c.role) }}
+                        </span>
+                      }
+                    </span>
+                    <div class="company-list__stats">
+                      <span class="company-list__stat" title="Productos">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M4 7h16v12H4z" />
+                          <path d="M8 7V5h8v2" />
+                        </svg>
+                        <strong>{{ c.productCount }}</strong> productos
+                      </span>
+                      <span class="company-list__stat" title="Entradas hoy">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 4v12M7 11l5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <strong>{{ c.movesInToday }}</strong> entr.
+                      </span>
+                      <span class="company-list__stat" title="Salidas hoy">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 20V8M7 13l5-5 5 5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <strong>{{ c.movesOutToday }}</strong> sal.
+                      </span>
+                      <span class="company-list__stat" title="Miembros">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="9" cy="8" r="3" />
+                          <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke-linecap="round" />
+                          <circle cx="17" cy="9" r="2.5" />
+                          <path d="M21 19c0-2.2-1.5-3.8-4-4.2" stroke-linecap="round" />
+                        </svg>
+                        <strong>{{ c.memberCount }}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="company-list__actions">
+                  <a class="company-list__action company-list__action--primary" [routerLink]="['/app/companies', c.id, 'products']">
+                    Inventario
+                  </a>
+                  <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'movimientos']">Movimientos</a>
+                  <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'equipo']">Equipo</a>
+                  <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'resumen']">Resumen</a>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
   }
 </div>

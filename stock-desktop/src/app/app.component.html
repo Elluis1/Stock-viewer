@@ -8,9 +8,45 @@
     <nav class="shell__nav">
       @if (session(); as _s) {
         <a routerLink="/app/companies">Mis empresas</a>
-        <a routerLink="/app/seguridad">Seguridad</a>
-        <button type="button" class="shell__signout" (click)="signOut()">Salir</button>
+        <div class="shell__user" (click)="keepMenuOpen($event)">
+          <button
+            type="button"
+            class="shell__user-btn"
+            [attr.aria-expanded]="userMenuOpen()"
+            aria-haspopup="menu"
+            (click)="toggleUserMenu($event)"
+          >
+            <span class="shell__user-name">{{ userLabel() }}</span>
+            <svg class="shell__user-caret" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          @if (userMenuOpen()) {
+            <div class="shell__menu" role="menu">
+              <button type="button" class="shell__menu-item" role="menuitem" (click)="toggleTheme($event)">
+                <span>{{ themeMenuLabel() }}</span>
+                <span class="shell__menu-hint">{{ themeResolved() === 'dark' ? 'Noche' : 'Día' }}</span>
+              </button>
+              <div class="shell__menu-sep" aria-hidden="true"></div>
+              <a class="shell__menu-item" role="menuitem" routerLink="/app/seguridad" (click)="closeUserMenu()">
+                Seguridad
+              </a>
+              <button type="button" class="shell__menu-item shell__menu-item--danger" role="menuitem" (click)="signOut()">
+                Cerrar sesión
+              </button>
+            </div>
+          }
+        </div>
       } @else {
+        <button
+          type="button"
+          class="shell__user-btn"
+          (click)="toggleTheme($event)"
+          [attr.aria-label]="themeMenuLabel()"
+          title="{{ themeMenuLabel() }}"
+        >
+          {{ themeResolved() === 'dark' ? 'Claro' : 'Oscuro' }}
+        </button>
         <a routerLink="/auth/login">Entrar</a>
         <a routerLink="/auth/register" class="shell__nav-cta">Crear cuenta</a>
       }

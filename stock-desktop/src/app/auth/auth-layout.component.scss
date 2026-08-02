@@ -5,31 +5,35 @@
   justify-content: center;
   padding: 1.5rem;
   background:
-    radial-gradient(1200px 600px at 20% 0%, rgb(37 99 235 / 12%), transparent 55%),
-    radial-gradient(900px 500px at 100% 20%, rgb(14 165 233 / 10%), transparent 50%),
-    linear-gradient(180deg, #f4f6fb 0%, #eef1f8 100%);
+    radial-gradient(ellipse 70% 50% at 15% 0%, var(--glow), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 95% 25%, var(--glow), transparent 50%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--mist) 80%, var(--accent) 8%) 0%,
+      var(--paper) 48%,
+      color-mix(in srgb, var(--mist) 70%, var(--accent) 10%) 100%
+    );
 }
 
 .auth-card {
   width: 100%;
   max-width: 26rem;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 1.5rem 1.5rem 1.35rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 1px 2px rgb(15 23 42 / 6%),
-    0 12px 40px rgb(15 23 42 / 8%);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
 }
 
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
-  padding: 0.25rem;
+  padding: 0.28rem;
   margin-bottom: 1.25rem;
-  border-radius: 10px;
-  background: #f1f5f9;
+  border-radius: 11px;
+  background: var(--mist);
+  border: 1px solid var(--line);
 }
 
 .auth-tab {
@@ -37,9 +41,11 @@
   text-align: center;
   padding: 0.55rem 0.5rem;
   border-radius: 8px;
+  font-family: var(--font-display);
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--muted);
   text-decoration: none;
   transition:
     background 0.15s ease,
@@ -48,13 +54,13 @@
 }
 
 .auth-tab:hover {
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .auth-tab.is-active {
-  background: #fff;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(13 27 30 / 8%);
 }
 
 .auth-panel {

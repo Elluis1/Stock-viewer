@@ -68,6 +68,7 @@ export type InventorySnapshotRow = {
   default_sale_price_unit: number | string | null;
   quantity_on_hand: string | number;
   last_purchase_unit_cost: string | number | null;
+  image_path: string | null;
 };
 
 /** Fila de listado de movimientos (join opcional a producto). */

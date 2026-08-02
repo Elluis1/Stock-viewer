@@ -84,8 +84,8 @@
       <p class="page__muted">Solo owner o admin pueden invitar o gestionar el equipo. Tu rol: {{ roleLabel(myRole() ?? 'member') }}.</p>
     }
 
-    <section class="panel">
-      <h2 class="panel__title">Miembros</h2>
+    <section class="team-section">
+      <h2 class="team-section__title">Miembros</h2>
       @if (members().length === 0) {
         <p class="page__muted">Sin miembros.</p>
       } @else {
@@ -135,8 +135,8 @@
     </section>
 
     @if (canManageTeam) {
-      <section class="panel">
-        <h2 class="panel__title">Invitaciones pendientes</h2>
+      <section class="team-section">
+        <h2 class="team-section__title">Invitaciones pendientes</h2>
         @if (invites().length === 0) {
           <p class="page__muted">No hay invitaciones pendientes.</p>
         } @else {

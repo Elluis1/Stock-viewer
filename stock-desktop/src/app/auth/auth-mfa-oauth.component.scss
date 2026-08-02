@@ -12,35 +12,38 @@
 
 .title {
   margin: 0 0 0.35rem;
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .lead {
   margin: 0 0 1rem;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .muted {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
 .foot {
   margin: 1.25rem 0 0;
   text-align: center;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
 }
 
 .foot a {
-  color: #2563eb;
-  font-weight: 600;
+  color: var(--accent);
+  font-weight: 700;
   text-decoration: none;
 }
 
 .foot a:hover {
+  color: var(--accent-deep);
   text-decoration: underline;
 }

@@ -1,17 +1,17 @@
 .auth-muted {
   margin: 0 0 1rem;
-  color: #64748b;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .auth-success {
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 1rem;
-  color: #14532d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
 }
 
 .auth-actions {
@@ -24,16 +24,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
-  padding: 0 1.1rem;
-  border-radius: 9px;
-  font-weight: 600;
+  min-height: 2.55rem;
+  padding: 0 1.15rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 0.9rem;
+  letter-spacing: -0.01em;
   color: #fff;
   text-decoration: none;
-  border: 1px solid #1d4ed8;
-  background: #2563eb;
+  border: 1px solid var(--accent-deep);
+  background: var(--accent);
   cursor: pointer;
+  box-shadow: 0 8px 20px rgb(13 122 95 / 18%);
+}
+
+.auth-btn:hover:not(:disabled) {
+  background: var(--accent-deep);
 }
 
 .auth-btn:disabled {
@@ -42,24 +49,26 @@
 }
 
 .auth-btn--ghost {
-  color: #1e40af;
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  color: var(--accent-deep);
+  background: rgb(13 122 95 / 8%);
+  border-color: rgb(13 122 95 / 22%);
+  box-shadow: none;
 }
 
 .auth-link {
-  color: #2563eb;
+  color: var(--accent);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .invite-card {
   margin: 0 0 1rem;
-  padding: 0.9rem 1rem;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  font-size: 0.9rem;
-  color: #334155;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: rgb(255 255 255 / 72%);
+  font-size: 0.92rem;
+  color: var(--ink);
 }
 
 .invite-card p {

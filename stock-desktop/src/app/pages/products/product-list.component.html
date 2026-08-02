@@ -1,202 +1,393 @@
-<div class="page">
+<div class="page inv">
   <a class="page__back" routerLink="/app/companies">← Mis empresas</a>
 
   @if (loading()) {
     <p class="page__muted">Cargando…</p>
-  } @else if (errorMessage()) {
-    <div class="page__alert" role="alert">{{ errorMessage() }}</div>
   } @else {
     <div class="page__head">
       <div>
-        <h1 class="page__title">Inventario y productos</h1>
+        <h1 class="page__title">Inventario</h1>
         <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
     </div>
+
     @if (companyId(); as cid) {
-      <nav class="tabs" aria-label="Secciones de la empresa">
-        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
-      </nav>
-    }
+      <div class="inv-section-bar">
+        <nav class="tabs" aria-label="Secciones de la empresa">
+          <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
+        </nav>
 
-    @if (inventory().length > 0) {
-      @if (canOperateStock) {
-      <section class="panel">
-        <h2 class="panel__title">Compra a proveedor</h2>
-        <p class="panel__help">
-          Registrá la cantidad que entró y el costo unitario que pagaste. Actualiza el stock y el costo de referencia del producto.
-        </p>
-        <form class="form" [formGroup]="purchaseForm" (ngSubmit)="recordPurchase()" novalidate>
-          <div class="form__row form__row--wrap">
-            <label class="form__field form__field--grow">
-              <span class="form__label">Producto</span>
-              <select class="form__input" formControlName="productId">
-                @for (row of inventory(); track row.product_id) {
-                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
-                }
-              </select>
-            </label>
-            <label class="form__field">
-              <span class="form__label">Cantidad</span>
-              <input class="form__input" type="number" formControlName="quantity" min="0.0001" step="any" />
-            </label>
-            <label class="form__field">
-              <span class="form__label">Costo unitario</span>
-              <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" />
-            </label>
-            <label class="form__field form__field--grow">
-              <span class="form__label">Nota (opcional)</span>
-              <input class="form__input" type="text" formControlName="note" placeholder="Factura, proveedor…" />
-            </label>
-            <div class="form__field form__field--btn">
-              <span class="form__label">&nbsp;</span>
-              <button class="form__submit" type="submit" [disabled]="savingPurchase()">
-                {{ savingPurchase() ? 'Guardando…' : 'Registrar compra' }}
+        @if (canManageCatalog || canOperateStock) {
+          <div class="inv-actions">
+            @if (canManageCatalog) {
+              <button type="button" class="inv-actions__btn inv-actions__btn--primary" (click)="openModal('product')">
+                Nuevo producto
               </button>
-            </div>
-          </div>
-        </form>
-      </section>
-      }
-
-      @if (canManageCatalog) {
-      <section class="panel">
-        <h2 class="panel__title">Precio de venta por defecto</h2>
-        <p class="panel__help">
-          Es el precio que se propone al registrar ventas. Podés cambiarlo cuando quieras; en cada venta también podés ajustar el precio solo para esa operación.
-        </p>
-        <form class="form" [formGroup]="priceDefaultForm" (ngSubmit)="saveDefaultSalePrice()" novalidate>
-          <div class="form__row form__row--wrap">
-            <label class="form__field form__field--grow">
-              <span class="form__label">Producto</span>
-              <select class="form__input" formControlName="productId">
-                @for (row of inventory(); track row.product_id) {
-                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
-                }
-              </select>
-            </label>
-            <label class="form__field">
-              <span class="form__label">Precio venta / unidad</span>
-              <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" />
-              @if (priceDefaultForm.controls.defaultSalePrice.touched && priceDefaultForm.controls.defaultSalePrice.hasError('required')) {
-                <span class="form__error">Obligatorio para guardar.</span>
-              }
-            </label>
-            <div class="form__field form__field--btn">
-              <span class="form__label">&nbsp;</span>
-              <button class="form__submit" type="submit" [disabled]="savingPriceDefault()">
-                {{ savingPriceDefault() ? 'Guardando…' : 'Guardar precio por defecto' }}
-              </button>
-            </div>
-          </div>
-        </form>
-      </section>
-      }
-    }
-
-    @if (canManageCatalog) {
-    <section class="panel">
-      <h2 class="panel__title">Nuevo producto</h2>
-      <p class="panel__help">
-        Podés cargar stock inicial como si fuera una compra: cantidad y costo unitario a proveedor (opcional).
-      </p>
-      <form class="form" [formGroup]="productForm" (ngSubmit)="addProduct()" novalidate>
-        <div class="form__row form__row--wrap">
-          <label class="form__field form__field--grow">
-            <span class="form__label">Nombre</span>
-            <input class="form__input" type="text" formControlName="name" />
-            @if (productForm.controls.name.touched && productForm.controls.name.hasError('required')) {
-              <span class="form__error">Obligatorio.</span>
             }
-          </label>
-          <label class="form__field">
-            <span class="form__label">SKU (opcional)</span>
-            <input class="form__input" type="text" formControlName="sku" />
-          </label>
-          <label class="form__field form__field--unit">
-            <span class="form__label">Medida de venta</span>
-            <input
-              class="form__input"
-              type="text"
-              formControlName="unit"
-              placeholder="ud, kg, caja…"
-              title="Cómo contás el producto (no es la cantidad en stock)"
-            />
-            <span class="form__hint">No es el stock: es ud / kg / caja, etc.</span>
-          </label>
-          <label class="form__field">
-            <span class="form__label">Cant. inicial (opc.)</span>
-            <input class="form__input" type="number" formControlName="initialQuantity" min="0" step="any" placeholder="0" />
-          </label>
-          <label class="form__field">
-            <span class="form__label">Costo unit. compra (opc.)</span>
-            <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" placeholder="Si hay cantidad" />
-          </label>
-          <label class="form__field">
-            <span class="form__label">Precio venta por defecto (opc.)</span>
-            <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" placeholder="Ej. venta al público" />
-            <span class="form__hint">Se usa al cargar ventas con solo producto y cantidad.</span>
-          </label>
-          <div class="form__field form__field--btn">
-            <span class="form__label">&nbsp;</span>
-            <button class="form__submit" type="submit" [disabled]="savingProduct()">
-              {{ savingProduct() ? 'Guardando…' : 'Agregar producto' }}
-            </button>
+            @if (canOperateStock && catalog().length > 0) {
+              <button type="button" class="inv-actions__btn" (click)="openModal('purchase')">
+                Registrar compra
+              </button>
+            }
+            @if (canManageCatalog && catalog().length > 0) {
+              <button type="button" class="inv-actions__btn" (click)="openModal('price')">
+                Precio por defecto
+              </button>
+            }
           </div>
-        </div>
-      </form>
-    </section>
-    } @else if (inventory().length === 0) {
-      <p class="page__muted">No hay productos aún. Pedile a un owner o admin que dé de alta el catálogo.</p>
+        }
+      </div>
     }
 
-    <section class="panel panel--table">
-      <h2 class="panel__title">Inventario</h2>
-      @if (inventory().length === 0) {
-        <p class="page__muted">Todavía no hay productos.{{ canManageCatalog ? ' Creá el primero arriba.' : '' }}</p>
-      } @else {
-        <div class="table-wrap">
-          <table class="table">
-            <colgroup>
-              <col class="table__col-name" />
-              <col class="table__col-sku" />
-              <col class="table__col-unit" />
-              <col class="table__col-stock" />
-              <col class="table__col-cost" />
-              <col class="table__col-sale" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">Nombre</th>
-                <th scope="col">SKU</th>
-                <th scope="col">Medida</th>
-                <th class="table__num" scope="col">Stock</th>
-                <th class="table__num" scope="col">Costo unit.</th>
-                <th class="table__num" scope="col">Precio venta</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of inventory(); track row.product_id) {
-                <tr>
-                  <td class="table__cell-text">{{ row.name }}</td>
-                  <td class="table__cell-muted">{{ row.sku ?? '—' }}</td>
-                  <td class="table__cell-muted">{{ row.unit }}</td>
-                  <td class="table__num table__cell-strong">{{ formatQty(row.quantity_on_hand) }}</td>
-                  <td class="table__num table__cell-strong">{{ formatMoney(displayUnitCost(row)) }}</td>
-                  <td class="table__num table__cell-strong">{{ formatMoney(displayDefaultSalePrice(row)) }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <p class="panel__footnote">
-          <strong>Medida</strong> es la unidad de conteo (ud, kg…), no la cantidad en stock — el stock está en su columna.
-          El costo es el de la última compra; si no hay, el de referencia del producto.
-          <strong>Precio venta</strong> es el valor por defecto al registrar ventas (editable arriba o en la venta).
+    @if (errorMessage(); as err) {
+      <div class="page__alert" role="alert">{{ err }}</div>
+    }
+
+    @if (catalog().length === 0) {
+      <div class="hub-empty-like">
+        <p class="page__muted">
+          Todavía no hay productos.
+          @if (canManageCatalog) {
+            Usá “Nuevo producto” para crear el primero.
+          } @else {
+            Pedile a un owner o admin que dé de alta el catálogo.
+          }
         </p>
+      </div>
+    } @else {
+      <div class="inv-split" [class.has-selection]="!!selected()">
+        <section class="inv-catalog" aria-label="Catálogo de productos">
+          <div class="inv-toolbar">
+            <label class="inv-search">
+              <span class="visually-hidden">Buscar producto</span>
+              <input
+                class="inv-search__input"
+                type="search"
+                placeholder="Buscar por nombre o SKU…"
+                [value]="searchQuery()"
+                (input)="onSearch(($any($event.target)).value)"
+              />
+            </label>
+            <label class="inv-sort">
+              <span class="visually-hidden">Ordenar</span>
+              <select class="inv-sort__select" [value]="sortKey()" (change)="onSort(($any($event.target)).value)">
+                <option value="name">Nombre A–Z</option>
+                <option value="stockAsc">Menor stock</option>
+                <option value="stockDesc">Mayor stock</option>
+                <option value="soldDesc">Más vendidos (30d)</option>
+              </select>
+            </label>
+          </div>
+
+          @if (filteredCatalog().length === 0) {
+            <p class="page__muted">Ningún producto coincide con la búsqueda.</p>
+          } @else {
+            <div class="inv-grid">
+              @for (row of filteredCatalog(); track row.product_id) {
+                <button
+                  type="button"
+                  class="inv-card"
+                  [class.is-selected]="selectedId() === row.product_id"
+                  (click)="selectProduct(row.product_id)"
+                >
+                  <span class="inv-card__media" [attr.data-tone]="avatarTone(row.name)" aria-hidden="true">
+                    @if (row.imageUrl) {
+                      <img class="inv-card__img" [src]="row.imageUrl" [alt]="row.name" loading="lazy" />
+                    } @else {
+                      <span class="inv-card__initial">{{ productInitial(row.name) }}</span>
+                    }
+                  </span>
+                  <span class="inv-card__name">{{ row.name }}</span>
+                  <span class="inv-card__stock" [class.is-empty]="row.stock <= 0">
+                    Stock {{ formatQty(row.stock) }}
+                    <span class="inv-card__unit">{{ row.unit }}</span>
+                  </span>
+                </button>
+              }
+            </div>
+          }
+        </section>
+
+        <aside class="inv-side" aria-live="polite">
+          @if (selected(); as product) {
+            <div class="inv-detail">
+              <div class="inv-detail__head">
+                <div class="inv-detail__identity">
+                  <span class="inv-detail__media" [attr.data-tone]="avatarTone(product.name)" aria-hidden="true">
+                    @if (product.imageUrl) {
+                      <img class="inv-detail__img" [src]="product.imageUrl" [alt]="product.name" />
+                    } @else {
+                      {{ productInitial(product.name) }}
+                    }
+                  </span>
+                  <div>
+                    <h2 class="inv-detail__title">{{ product.name }}</h2>
+                    <p class="inv-detail__meta">
+                      {{ product.sku ? 'SKU ' + product.sku + ' · ' : '' }}{{ product.unit }}
+                    </p>
+                  </div>
+                </div>
+                <button type="button" class="inv-detail__close" (click)="clearSelection()">Cerrar</button>
+              </div>
+
+              @if (canManageCatalog) {
+                <div class="inv-photo">
+                  <label class="inv-photo__btn">
+                    <input
+                      class="visually-hidden"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      [disabled]="uploadingImage()"
+                      (change)="onImageSelected($event)"
+                    />
+                    {{ uploadingImage() ? 'Subiendo…' : product.imageUrl ? 'Cambiar foto' : 'Subir foto' }}
+                  </label>
+                  @if (product.imageUrl) {
+                    <button
+                      type="button"
+                      class="inv-photo__remove"
+                      [disabled]="uploadingImage()"
+                      (click)="removeImage()"
+                    >
+                      Quitar
+                    </button>
+                  }
+                  <p class="inv-photo__hint">JPG, PNG, WEBP o GIF · máx. 5 MB</p>
+                </div>
+              }
+
+              <div class="inv-metrics">
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Stock</span>
+                  <span class="inv-metric__value">{{ formatQty(product.stock) }}</span>
+                </div>
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Costo unit.</span>
+                  <span class="inv-metric__value">{{ formatMoney(displayUnitCost(product)) }}</span>
+                </div>
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Precio venta</span>
+                  <span class="inv-metric__value">{{ formatMoney(displayDefaultSalePrice(product)) }}</span>
+                </div>
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Valor stock</span>
+                  <span class="inv-metric__value">{{ formatMoney(stockValue(product)) }}</span>
+                </div>
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Vendidos 30d</span>
+                  <span class="inv-metric__value">{{ formatQty(product.soldQty30d) }}</span>
+                </div>
+                <div class="inv-metric">
+                  <span class="inv-metric__label">Comprados 30d</span>
+                  <span class="inv-metric__value">{{ formatQty(product.purchasedQty30d) }}</span>
+                </div>
+                <div class="inv-metric inv-metric--wide">
+                  <span class="inv-metric__label">Ingresos 30d</span>
+                  <span class="inv-metric__value">{{ formatMoney(product.salesRevenue30d) }}</span>
+                </div>
+              </div>
+
+              @if (companyId(); as cid) {
+                <a class="inv-detail__link" [routerLink]="['/app/companies', cid, 'movimientos']">
+                  Ver movimientos →
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="inv-insights">
+              <h2 class="inv-insights__title">Resumen del catálogo</h2>
+              <p class="inv-insights__lead">Tocá un producto a la izquierda para ver su detalle.</p>
+
+              <section class="inv-rank">
+                <h3 class="inv-rank__title">Más vendidos (30 días)</h3>
+                @if (topSold().length === 0) {
+                  <p class="inv-rank__empty">Sin ventas en el período.</p>
+                } @else {
+                  <ol class="inv-rank__list">
+                    @for (row of topSold(); track row.product_id) {
+                      <li>
+                        <button type="button" class="inv-rank__item" (click)="selectProduct(row.product_id)">
+                          <span class="inv-rank__name">{{ row.name }}</span>
+                          <span class="inv-rank__value">{{ formatQty(row.soldQty30d) }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ol>
+                }
+              </section>
+
+              <section class="inv-rank">
+                <h3 class="inv-rank__title">Mayor stock</h3>
+                <ol class="inv-rank__list">
+                  @for (row of mostStock(); track row.product_id) {
+                    <li>
+                      <button type="button" class="inv-rank__item" (click)="selectProduct(row.product_id)">
+                        <span class="inv-rank__name">{{ row.name }}</span>
+                        <span class="inv-rank__value">{{ formatQty(row.stock) }}</span>
+                      </button>
+                    </li>
+                  }
+                </ol>
+              </section>
+
+              <section class="inv-rank">
+                <h3 class="inv-rank__title">Menor stock</h3>
+                <ol class="inv-rank__list">
+                  @for (row of leastStock(); track row.product_id) {
+                    <li>
+                      <button type="button" class="inv-rank__item" (click)="selectProduct(row.product_id)">
+                        <span class="inv-rank__name">{{ row.name }}</span>
+                        <span class="inv-rank__value" [class.is-empty]="row.stock <= 0">{{ formatQty(row.stock) }}</span>
+                      </button>
+                    </li>
+                  }
+                </ol>
+              </section>
+            </div>
+          }
+        </aside>
+      </div>
+    }
+  }
+
+  @if (activeModal(); as modal) {
+    <div class="modal" role="presentation">
+      <button type="button" class="modal__backdrop" aria-label="Cerrar" (click)="closeModal()"></button>
+
+      @if (modal === 'product') {
+        <div
+          class="modal__panel modal__panel--wide"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-product-title"
+        >
+          <div class="modal__head">
+            <h2 class="modal__title" id="modal-product-title">Nuevo producto</h2>
+            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+          </div>
+          <form class="form form--modal" [formGroup]="productForm" (ngSubmit)="addProduct()" novalidate>
+            <div class="form__grid">
+              <label class="form__field form__field--span2">
+                <span class="form__label">Nombre</span>
+                <input class="form__input" type="text" formControlName="name" />
+              </label>
+              <label class="form__field">
+                <span class="form__label">SKU</span>
+                <input class="form__input" type="text" formControlName="sku" />
+              </label>
+              <label class="form__field">
+                <span class="form__label">Medida (ud, kg…)</span>
+                <input class="form__input" type="text" formControlName="unit" placeholder="ud" />
+              </label>
+              <label class="form__field form__field--span2">
+                <span class="form__label">Foto (opcional)</span>
+                <input
+                  class="form__input form__input--file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  (change)="onNewProductImageSelected($event)"
+                />
+                @if (newProductImageName(); as imgName) {
+                  <span class="form__hint">{{ imgName }}</span>
+                } @else {
+                  <span class="form__hint">JPG, PNG, WEBP o GIF · máx. 5 MB</span>
+                }
+              </label>
+              <label class="form__field">
+                <span class="form__label">Cant. inicial</span>
+                <input class="form__input" type="number" formControlName="initialQuantity" min="0" step="any" />
+              </label>
+              <label class="form__field">
+                <span class="form__label">Costo unit.</span>
+                <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" />
+              </label>
+              <label class="form__field form__field--span2">
+                <span class="form__label">Precio venta</span>
+                <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" />
+              </label>
+            </div>
+            <div class="modal__actions">
+              <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
+              <button class="form__submit" type="submit" [disabled]="savingProduct()">
+                {{ savingProduct() ? 'Guardando…' : 'Agregar' }}
+              </button>
+            </div>
+          </form>
+        </div>
       }
-    </section>
+
+      @if (modal === 'purchase') {
+        <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-purchase-title">
+          <div class="modal__head">
+            <h2 class="modal__title" id="modal-purchase-title">Registrar compra</h2>
+            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+          </div>
+          <form class="form form--modal" [formGroup]="purchaseForm" (ngSubmit)="recordPurchase()" novalidate>
+            <div class="form__grid">
+              <label class="form__field form__field--span2">
+                <span class="form__label">Producto</span>
+                <select class="form__input" formControlName="productId">
+                  @for (row of catalog(); track row.product_id) {
+                    <option [value]="row.product_id">{{ row.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form__field">
+                <span class="form__label">Cantidad</span>
+                <input class="form__input" type="number" formControlName="quantity" min="0.0001" step="any" />
+              </label>
+              <label class="form__field">
+                <span class="form__label">Costo unit.</span>
+                <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" />
+              </label>
+              <label class="form__field form__field--span2">
+                <span class="form__label">Nota</span>
+                <input class="form__input" type="text" formControlName="note" />
+              </label>
+            </div>
+            <div class="modal__actions">
+              <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
+              <button class="form__submit" type="submit" [disabled]="savingPurchase()">
+                {{ savingPurchase() ? 'Guardando…' : 'Registrar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      @if (modal === 'price') {
+        <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-price-title">
+          <div class="modal__head">
+            <h2 class="modal__title" id="modal-price-title">Precio de venta por defecto</h2>
+            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+          </div>
+          <form class="form form--modal" [formGroup]="priceDefaultForm" (ngSubmit)="saveDefaultSalePrice()" novalidate>
+            <div class="form__grid">
+              <label class="form__field form__field--span2">
+                <span class="form__label">Producto</span>
+                <select class="form__input" formControlName="productId">
+                  @for (row of catalog(); track row.product_id) {
+                    <option [value]="row.product_id">{{ row.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="form__field form__field--span2">
+                <span class="form__label">Precio / unidad</span>
+                <input class="form__input" type="number" formControlName="defaultSalePrice" min="0" step="any" />
+              </label>
+            </div>
+            <div class="modal__actions">
+              <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
+              <button class="form__submit" type="submit" [disabled]="savingPriceDefault()">
+                {{ savingPriceDefault() ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+    </div>
   }
 </div>

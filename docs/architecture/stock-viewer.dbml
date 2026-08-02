@@ -55,14 +55,14 @@ Table products {
   unit text [not null, default: 'unit']
   default_cost_unit numeric
   default_sale_price_unit numeric
-  image_path text [null, note: '[FUTURO] path en Supabase Storage']
+  image_path text [null, note: '[HOY] path en bucket product-images']
   expires_at date [null, note: '[FUTURO] alertas de vencimiento']
   min_stock numeric [null, note: '[FUTURO] umbral stock bajo']
   warehouse_id uuid [null, ref: > warehouses.id, note: '[FUTURO] depósito default']
   created_at timestamptz [default: `now()`]
   updated_at timestamptz [default: `now()`]
 
-  Note: '[HOY] Campos base + precios. barcode/image/min_stock/expires = futuro.'
+  Note: '[HOY] Campos base + precios + image_path. barcode/min_stock/expires = futuro.'
 }
 
 Table stock_movements {
