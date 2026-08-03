@@ -17,7 +17,7 @@ type CatalogItem = InventorySnapshotRow & {
 };
 
 type SortKey = 'name' | 'stockAsc' | 'stockDesc' | 'soldDesc';
-type ActiveModal = 'product' | 'purchase' | 'price';
+type ActiveModal = 'product' | 'price';
 
 @Component({
   selector: 'app-product-list',
@@ -42,7 +42,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
   readonly sortKey = signal<SortKey>('name');
   readonly loading = signal(true);
   readonly savingProduct = signal(false);
-  readonly savingPurchase = signal(false);
   readonly savingPriceDefault = signal(false);
   readonly uploadingImage = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -57,13 +56,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
     initialQuantity: [''],
     unitCost: [''],
     defaultSalePrice: [''],
-  });
-
-  readonly purchaseForm = this.fb.nonNullable.group({
-    productId: ['', Validators.required],
-    quantity: ['1', [Validators.required]],
-    unitCost: ['', [Validators.required]],
-    note: [''],
   });
 
   readonly priceDefaultForm = this.fb.nonNullable.group({
@@ -121,10 +113,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
     return this.access.canManageCatalog(this.myRole());
   }
 
-  get canOperateStock(): boolean {
-    return this.access.canOperateStock(this.myRole());
-  }
-
   roleLabel(): string {
     return this.access.roleLabel(this.myRole());
   }
@@ -143,9 +131,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
   openModal(kind: ActiveModal): void {
     this.errorMessage.set(null);
     const preferredId = this.selectedId() ?? this.catalog()[0]?.product_id ?? '';
-    if (kind === 'purchase') {
-      this.purchaseForm.patchValue({ productId: preferredId }, { emitEvent: false });
-    }
     if (kind === 'price') {
       this.priceDefaultForm.patchValue({ productId: preferredId }, { emitEvent: false });
       this.syncPriceDefaultFormFromInventory();
@@ -176,7 +161,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
   selectProduct(id: string): void {
     this.selectedId.set(this.selectedId() === id ? null : id);
     if (this.selectedId()) {
-      this.purchaseForm.patchValue({ productId: id }, { emitEvent: false });
       this.priceDefaultForm.patchValue({ productId: id }, { emitEvent: false });
       this.syncPriceDefaultFormFromInventory();
       queueMicrotask(() => {
@@ -313,7 +297,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
     }
 
     const focusId = this.selectedId() ?? rows[0]?.product_id ?? '';
-    this.purchaseForm.patchValue({ productId: focusId }, { emitEvent: false });
     this.priceDefaultForm.patchValue({ productId: focusId }, { emitEvent: false });
     this.syncPriceDefaultFormFromInventory();
   }
@@ -592,61 +575,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
       this.errorMessage.set(error.message);
       return;
     }
-    this.closeModal();
-    await this.load(cid);
-  }
-
-  async recordPurchase(): Promise<void> {
-    const cid = this.companyId();
-    if (!cid) {
-      return;
-    }
-    if (!this.canOperateStock) {
-      this.errorMessage.set('No tenés permiso para registrar compras.');
-      return;
-    }
-    this.errorMessage.set(null);
-    if (this.purchaseForm.invalid) {
-      this.purchaseForm.markAllAsTouched();
-      return;
-    }
-    const qty = parsePositiveNumber(this.purchaseForm.controls.quantity.value);
-    const cost = parseNonNegativeNumber(this.purchaseForm.controls.unitCost.value);
-    if (qty === null || qty <= 0) {
-      this.errorMessage.set('La cantidad tiene que ser mayor que 0.');
-      return;
-    }
-    if (cost === null || cost < 0) {
-      this.errorMessage.set('El costo unitario es obligatorio (≥ 0).');
-      return;
-    }
-    const productId = this.purchaseForm.controls.productId.value;
-    const note = this.purchaseForm.controls.note.value.trim();
-    this.savingPurchase.set(true);
-    const { error: movErr } = await this.supabase.client.from('stock_movements').insert({
-      company_id: cid,
-      product_id: productId,
-      quantity: qty,
-      movement_type: 'purchase',
-      unit_cost: cost,
-      note: note.length ? note : null,
-    });
-    if (movErr) {
-      this.savingPurchase.set(false);
-      this.errorMessage.set(movErr.message);
-      return;
-    }
-    const { error: updErr } = await this.supabase.client
-      .from('products')
-      .update({ default_cost_unit: cost })
-      .eq('id', productId)
-      .eq('company_id', cid);
-    this.savingPurchase.set(false);
-    if (updErr) {
-      this.errorMessage.set(updErr.message);
-      return;
-    }
-    this.purchaseForm.patchValue({ quantity: '1', unitCost: '', note: '' });
     this.closeModal();
     await this.load(cid);
   }

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CompanyAccessService } from '../../core/company-access.service';
@@ -7,6 +7,7 @@ import { CompanyTeamService } from '../../core/company-team.service';
 import { SessionService } from '../../core/session.service';
 import { SupabaseService } from '../../core/supabase.service';
 import type { CompanyInviteRow, CompanyMemberRole, CompanyMemberRow } from '../../models/stock.types';
+import { resolveAvatarUrl } from '../../shared/avatar-url';
 
 @Component({
   selector: 'app-company-team',
@@ -14,7 +15,7 @@ import type { CompanyInviteRow, CompanyMemberRole, CompanyMemberRow } from '../.
   templateUrl: './company-team.component.html',
   styleUrl: './company-team.component.scss',
 })
-export class CompanyTeamComponent implements OnInit {
+export class CompanyTeamComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly supabase = inject(SupabaseService);
   private readonly team = inject(CompanyTeamService);
@@ -37,6 +38,7 @@ export class CompanyTeamComponent implements OnInit {
   readonly lastInviteLink = signal<string | null>(null);
   readonly lastInviteEmail = signal<string | null>(null);
   readonly lastMailto = signal<string | null>(null);
+  readonly inviteModalOpen = signal(false);
 
   readonly inviteForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -53,6 +55,53 @@ export class CompanyTeamComponent implements OnInit {
 
   roleLabel(role: string | null | undefined): string {
     return this.access.roleLabel((role as CompanyMemberRole) ?? null);
+  }
+
+  memberInitial(emailOrId: string): string {
+    const raw = (emailOrId || '?').trim();
+    return (raw[0] ?? '?').toUpperCase();
+  }
+
+  memberAvatarUrl(m: { email?: string | null; avatar_url?: string | null }): string | null {
+    return resolveAvatarUrl({
+      avatarUrl: m.avatar_url,
+      email: m.email,
+      size: 80,
+    });
+  }
+
+  inviteAvatarUrl(email: string): string | null {
+    return resolveAvatarUrl({ email, size: 80 });
+  }
+
+  avatarTone(value: string): number {
+    let h = 0;
+    for (let i = 0; i < value.length; i++) {
+      h = (h + value.charCodeAt(i) * (i + 1)) % 5;
+    }
+    return h;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.inviteModalOpen()) {
+      this.closeInviteModal();
+    }
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
+  }
+
+  openInviteModal(): void {
+    this.errorMessage.set(null);
+    this.inviteModalOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeInviteModal(): void {
+    this.inviteModalOpen.set(false);
+    document.body.style.overflow = '';
   }
 
   async ngOnInit(): Promise<void> {
@@ -177,11 +226,13 @@ export class CompanyTeamComponent implements OnInit {
       this.lastInviteEmail.set(created.email);
       this.lastMailto.set(mailto);
       this.inviteForm.reset({ email: '', role: 'member' });
+      this.closeInviteModal();
       await this.load();
       await this.sendEmailForLastInvite();
     } else {
       this.successMessage.set('Invitación creada.');
       this.inviteForm.reset({ email: '', role: 'member' });
+      this.closeInviteModal();
       await this.load();
     }
   }

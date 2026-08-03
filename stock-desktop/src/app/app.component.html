@@ -4,7 +4,7 @@
   [class.shell--home]="isHome() && !session()"
 >
   <header class="shell__header">
-    <a class="shell__brand" routerLink="/">Stock desktop</a>
+    <a class="shell__brand" routerLink="/">STOCK VIEWER</a>
     <nav class="shell__nav">
       @if (session(); as _s) {
         <a routerLink="/app/companies">Mis empresas</a>
@@ -13,16 +13,30 @@
             type="button"
             class="shell__user-btn"
             [attr.aria-expanded]="userMenuOpen()"
+            [attr.aria-label]="'Menú de ' + userLabel()"
             aria-haspopup="menu"
             (click)="toggleUserMenu($event)"
           >
-            <span class="shell__user-name">{{ userLabel() }}</span>
+            @if (userAvatarUrl(); as avatar) {
+              <img class="shell__user-avatar" [src]="avatar" [alt]="userLabel()" width="32" height="32" />
+            } @else {
+              <span class="shell__user-avatar shell__user-avatar--fallback" aria-hidden="true">{{ userInitial() }}</span>
+            }
             <svg class="shell__user-caret" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
           @if (userMenuOpen()) {
             <div class="shell__menu" role="menu">
+              <div class="shell__menu-user" aria-hidden="true">
+                @if (userAvatarUrl(); as avatar) {
+                  <img class="shell__menu-avatar" [src]="avatar" alt="" width="36" height="36" />
+                } @else {
+                  <span class="shell__user-avatar shell__user-avatar--fallback">{{ userInitial() }}</span>
+                }
+                <span class="shell__menu-user-name">{{ userLabel() }}</span>
+              </div>
+              <div class="shell__menu-sep" aria-hidden="true"></div>
               <button type="button" class="shell__menu-item" role="menuitem" (click)="toggleTheme($event)">
                 <span>{{ themeMenuLabel() }}</span>
                 <span class="shell__menu-hint">{{ themeResolved() === 'dark' ? 'Noche' : 'Día' }}</span>

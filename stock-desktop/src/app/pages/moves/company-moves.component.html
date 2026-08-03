@@ -1,7 +1,5 @@
-<div class="page">
-  <div class="page__breadcrumbs">
-    <a routerLink="/app/companies">← Empresas</a>
-  </div>
+<div class="page moves">
+  <a class="page__back" routerLink="/app/companies">← Mis empresas</a>
 
   @if (loading()) {
     <p class="page__muted">Cargando…</p>
@@ -10,170 +8,485 @@
   } @else {
     <div class="page__head">
       <div>
-        <h1 class="page__title">Ventas y movimientos del día</h1>
+        <h1 class="page__title">Movimientos</h1>
         <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
-      <label class="page__date">
-        <span class="page__date-label">Día</span>
-        <input type="date" [value]="dayStr()" (change)="onDayChange($event)" />
-      </label>
+      <div class="moves-period">
+        <div class="moves-period__chips" role="group" aria-label="Período">
+          <button
+            type="button"
+            class="moves-period__chip"
+            [class.is-active]="periodMode() === 'day'"
+            (click)="setPeriodMode('day')"
+          >
+            Día
+          </button>
+          <button
+            type="button"
+            class="moves-period__chip"
+            [class.is-active]="periodMode() === '7d'"
+            (click)="setPeriodMode('7d')"
+          >
+            7 días
+          </button>
+          <button
+            type="button"
+            class="moves-period__chip"
+            [class.is-active]="periodMode() === '30d'"
+            (click)="setPeriodMode('30d')"
+          >
+            30 días
+          </button>
+        </div>
+        @if (periodMode() === 'day') {
+          <label class="page__date">
+            <span class="page__date-label">Fecha</span>
+            <input type="date" [value]="dayStr()" (change)="onDayChange($event)" />
+          </label>
+        } @else {
+          <p class="moves-period__hint">{{ periodHint() }}</p>
+        }
+      </div>
     </div>
+
     @if (companyId(); as cid) {
-      <nav class="tabs" aria-label="Secciones de la empresa">
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
-        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
-      </nav>
-    }
+      <div class="moves-section-bar">
+        <nav class="tabs" aria-label="Secciones de la empresa">
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+          <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
+        </nav>
 
-    @if (errorMessage()) {
-      <div class="page__alert" role="alert">{{ errorMessage() }}</div>
-    }
-
-    @if (canOperateStock) {
-    <section class="panel">
-      <h2 class="panel__title">Registrar venta</h2>
-      <p class="panel__help">
-        Elegí producto y cantidad: el precio de venta y el costo salen del producto (precio por defecto en Inventario y último costo de compra). Podés cambiarlos solo para esta venta abajo.
-      </p>
-      @if (inventory().length === 0) {
-        <p class="page__muted">Primero creá productos en Inventario.</p>
-      } @else {
-        <p class="panel__stock">
-          Stock disponible del producto elegido:
-          <strong>{{ formatQtyPlain(saleStockAvailable()) }}</strong>
-        </p>
-        @if (saleDefaultsComplete()) {
-          <p class="panel__preview">{{ saleDefaultsSummary() }}</p>
-        }
-        @if (saleDefaultsMissingHint(); as miss) {
-          <p class="panel__warn" role="status">{{ miss }}</p>
-        }
-        @if (saleQtyExceedsStock()) {
-          <p class="panel__warn" role="status">La cantidad supera el stock disponible.</p>
-        }
-        <form class="form" [formGroup]="saleForm" (ngSubmit)="recordSale()" novalidate>
-          <div class="form__row form__row--wrap">
-            <label class="form__field form__field--grow">
-              <span class="form__label">Producto</span>
-              <select class="form__input" formControlName="productId">
-                @for (row of inventory(); track row.product_id) {
-                  <option [value]="row.product_id">{{ row.name }}{{ row.sku ? ' — ' + row.sku : '' }}</option>
-                }
-              </select>
-            </label>
-            <label class="form__field">
-              <span class="form__label">Cantidad (máx. {{ formatQtyPlain(saleStockAvailable()) }})</span>
-              <input
-                class="form__input"
-                type="number"
-                formControlName="quantity"
-                min="0.0001"
-                step="any"
-                [attr.max]="saleStockAvailable() > 0 ? saleStockAvailable() : null"
-              />
-            </label>
-            <div class="form__field form__field--btn">
-              <span class="form__label">&nbsp;</span>
-              <button
-                class="form__submit"
-                type="submit"
-                [disabled]="
-                  savingSale() ||
-                  saleStockAvailable() <= 0 ||
-                  saleQtyExceedsStock() ||
-                  !saleDefaultsComplete()
-                "
-              >
-                {{ savingSale() ? 'Guardando…' : 'Registrar venta' }}
-              </button>
-            </div>
+        @if (canOperateStock) {
+          <div class="moves-actions">
+            <button
+              type="button"
+              class="moves-actions__btn moves-actions__btn--primary"
+              (click)="openModal('sale')"
+              [disabled]="inventory().length === 0"
+            >
+              Registrar venta
+            </button>
+            <button
+              type="button"
+              class="moves-actions__btn"
+              (click)="openModal('purchase')"
+              [disabled]="inventory().length === 0"
+            >
+              Registrar compra
+            </button>
           </div>
-          <details class="form__advanced">
-            <summary>Ajustar precio o costo (opcional)</summary>
-            <div class="form__row form__row--wrap form__advanced__row">
-              <label class="form__field">
-                <span class="form__label">Precio venta unit.</span>
-                <input class="form__input" type="number" formControlName="unitSalePrice" min="0" step="any" placeholder="Por defecto del producto" />
-              </label>
-              <label class="form__field">
-                <span class="form__label">Costo al vender</span>
-                <input class="form__input" type="number" formControlName="unitCostAtSale" min="0" step="any" placeholder="Último costo / referencia" />
-              </label>
-            </div>
-          </details>
-        </form>
-      }
-    </section>
-    } @else {
-      <p class="page__muted">No tenés permiso para registrar ventas en esta empresa.</p>
+        }
+      </div>
     }
 
-    <section class="panel panel--table">
-      <h2 class="panel__title">Entradas y salidas del día</h2>
-      <p class="panel__help">Compras (entrada de stock), ventas (salida) y otros movimientos registrados en la fecha elegida.</p>
+    @if (errorMessage(); as err) {
+      <div class="page__alert" role="alert">{{ err }}</div>
+    }
 
+    @if (!canOperateStock) {
+      <p class="page__muted">No tenés permiso para registrar ventas o compras en esta empresa.</p>
+    } @else if (inventory().length === 0) {
+      <p class="page__muted">Primero creá productos en Inventario para poder registrar movimientos.</p>
+    }
+
+    <section class="moves-summary" aria-label="Resumen del período">
       @if (!loadingMoves()) {
         <div class="balance">
           <div class="balance__card balance__card--out">
             <span class="balance__label">Gastado en compras</span>
-            <span class="balance__value">{{ formatMoney(dayPurchasesSpend()) }}</span>
-            <span class="balance__hint">Suma del día (costo × cantidad en compras)</span>
+            <span class="balance__value">{{ formatMoney(periodPurchasesSpend()) }}</span>
+            <span class="balance__hint">Costo × cantidad · {{ periodHint() }}</span>
           </div>
           <div class="balance__card balance__card--in">
             <span class="balance__label">Ingresos por ventas</span>
-            <span class="balance__value">{{ formatMoney(daySalesRevenue()) }}</span>
-            <span class="balance__hint">Suma del día (precio venta × cantidad en ventas)</span>
+            <span class="balance__value">{{ formatMoney(periodSalesRevenue()) }}</span>
+            <span class="balance__hint">Precio × cantidad · {{ periodHint() }}</span>
           </div>
           <div class="balance__card balance__card--net">
-            <span class="balance__label">Balance del día</span>
-            <span class="balance__value">{{ formatMoney(dayBalanceNet()) }}</span>
-            <span class="balance__hint">Ingresos por ventas − gasto en compras</span>
+            <span class="balance__label">Balance</span>
+            <span class="balance__value">{{ formatMoney(periodBalanceNet()) }}</span>
+            <span class="balance__hint">Ventas − compras</span>
           </div>
-        </div>
-      }
-
-      @if (loadingMoves()) {
-        <p class="page__muted">Cargando movimientos…</p>
-      } @else if (movements().length === 0) {
-        <p class="page__muted">No hay movimientos en este día.</p>
-      } @else {
-        <div class="table-wrap">
-          <table class="table">
-            <colgroup>
-              <col class="col-time" />
-              <col class="col-type" />
-              <col class="col-product" />
-              <col class="col-qty" />
-              <col class="col-detail" />
-              <col class="col-note" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">Hora</th>
-                <th scope="col">Tipo</th>
-                <th scope="col">Producto</th>
-                <th class="table__num" scope="col">Cantidad</th>
-                <th scope="col">Importes</th>
-                <th scope="col">Nota</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of movements(); track row.id) {
-                <tr>
-                  <td class="cell-time">{{ row.created_at | date: 'HH:mm' }}</td>
-                  <td><span [class]="movementKindClass(row.movement_type)">{{ movementLabel(row.movement_type) }}</span></td>
-                  <td class="cell-product">{{ productName(row) }}</td>
-                  <td class="table__num cell-strong">{{ formatQtySigned(row) }}</td>
-                  <td class="cell-detail">{{ detailLine(row) }}</td>
-                  <td class="cell-note">{{ row.note ?? '—' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <div class="balance__card">
+            <span class="balance__label">Movimientos</span>
+            <span class="balance__value">{{ periodMoveCount() }}</span>
+            <span class="balance__hint">Con los filtros actuales</span>
+          </div>
         </div>
       }
     </section>
+
+    <section class="moves-ledger" aria-label="Libro diario">
+      <div class="moves-ledger__head">
+        <div>
+          <h2 class="moves-ledger__title">Libro diario</h2>
+          <p class="moves-ledger__lead">Cronología de entradas y salidas · {{ periodHint() }}</p>
+        </div>
+      </div>
+
+      <div class="moves-ledger__filters">
+        <label class="moves-search">
+          <span class="visually-hidden">Buscar producto</span>
+          <input
+            class="moves-search__input"
+            type="search"
+            placeholder="Buscar producto…"
+            [value]="searchQuery()"
+            (input)="onSearch(($any($event.target)).value)"
+          />
+        </label>
+        <label class="moves-type">
+          <span class="visually-hidden">Tipo</span>
+          <select class="moves-type__select" [value]="typeFilter()" (change)="onTypeFilter(($any($event.target)).value)">
+            <option value="all">Todos los tipos</option>
+            <option value="sale">Ventas</option>
+            <option value="purchase">Compras</option>
+          </select>
+        </label>
+        @if (productFilterName(); as pname) {
+          <button type="button" class="moves-filter-chip" (click)="clearProductFilter()">
+            Producto: {{ pname }} ×
+          </button>
+        }
+      </div>
+
+      @if (loadingMoves()) {
+        <p class="page__muted">Cargando movimientos…</p>
+      } @else if (ledgerGroups().length === 0) {
+        <p class="page__muted">No hay movimientos en este período{{ searchQuery() || typeFilter() !== 'all' || productIdFilter() ? ' con estos filtros' : '' }}.</p>
+      } @else {
+        @for (group of ledgerGroups(); track group.key) {
+          <div class="ledger-day">
+            @if (periodMode() !== 'day') {
+              <h3 class="ledger-day__title">{{ group.label }}</h3>
+            }
+            <div class="table-wrap">
+              <table class="table">
+                <colgroup>
+                  <col class="col-time" />
+                  <col class="col-type" />
+                  <col class="col-product" />
+                  <col class="col-qty" />
+                  <col class="col-unit" />
+                  <col class="col-total" />
+                  <col class="col-detail" />
+                  <col class="col-note" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Hora</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Producto</th>
+                    <th class="table__num" scope="col">Cantidad</th>
+                    <th class="table__num" scope="col">Unitario</th>
+                    <th class="table__num" scope="col">Total</th>
+                    <th scope="col">Detalle</th>
+                    <th scope="col">Nota</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of group.rows; track row.id) {
+                    <tr>
+                      <td class="cell-time">{{ row.created_at | date: 'HH:mm' }}</td>
+                      <td>
+                        <span [class]="movementKindClass(row.movement_type)">{{ movementLabel(row.movement_type) }}</span>
+                      </td>
+                      <td class="cell-product">{{ productName(row) }}</td>
+                      <td class="table__num cell-strong">{{ formatQtySigned(row) }}</td>
+                      <td class="table__num cell-unit">{{ formatMoney(unitAmount(row)) }}</td>
+                      <td class="table__num cell-total">{{ formatMoney(movementTotal(row)) }}</td>
+                      <td class="cell-detail">{{ detailLine(row) }}</td>
+                      <td class="cell-note">{{ row.note ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+    </section>
+  }
+
+  @if (activeModal(); as modal) {
+    <div class="modal" role="presentation">
+      <button type="button" class="modal__backdrop" aria-label="Cerrar" (click)="closeModal()"></button>
+
+      @if (modal === 'sale') {
+        <div class="modal__panel modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="modal-sale-title">
+          <div class="modal__head">
+            <h2 class="modal__title" id="modal-sale-title">Registrar venta</h2>
+            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+          </div>
+          @if (inventory().length === 0) {
+            <p class="page__muted">Primero creá productos en Inventario.</p>
+          } @else {
+            <p class="modal__help">
+              El precio y el costo salen del producto. Podés ajustarlos solo para esta venta.
+            </p>
+            <p class="modal__stock">
+              Stock disponible:
+              <strong>{{ formatQtyPlain(saleStockAvailable()) }}</strong>
+            </p>
+            @if (saleDefaultsComplete()) {
+              <p class="modal__preview">{{ saleDefaultsSummary() }}</p>
+            }
+            @if (saleDefaultsMissingHint(); as miss) {
+              <p class="modal__warn" role="status">{{ miss }}</p>
+            }
+            @if (saleQtyExceedsStock()) {
+              <p class="modal__warn" role="status">La cantidad supera el stock disponible.</p>
+            }
+            <form class="form form--modal" [formGroup]="saleForm" (ngSubmit)="recordSale()" novalidate>
+              <div class="form__grid">
+                <div class="form__field form__field--span2">
+                  <span class="form__label">Producto</span>
+                  <input type="hidden" formControlName="productId" />
+                  @if (modalSelectedProduct(); as selected) {
+                    <p class="product-picker__selected">
+                      {{ productOptionLabel(selected) }}
+                      <span class="product-picker__stock">Stock {{ formatQtyPlain(stockOnHand(selected)) }}</span>
+                    </p>
+                  }
+                  <div class="product-picker">
+                    <input
+                      class="form__input product-picker__input"
+                      type="search"
+                      placeholder="Buscar por nombre o SKU…"
+                      [value]="productPickerQuery()"
+                      (input)="onProductPickerInput(($any($event.target)).value)"
+                      (focus)="openProductPicker()"
+                      (blur)="closeProductPickerSoon()"
+                      autocomplete="off"
+                    />
+                    @if (productPickerOpen()) {
+                      <ul class="product-picker__list" role="listbox">
+                        @if (productPickerResults().length === 0) {
+                          <li class="product-picker__empty">Ningún producto coincide.</li>
+                        } @else {
+                          @for (row of productPickerResults(); track row.product_id) {
+                            <li>
+                              <button
+                                type="button"
+                                class="product-picker__option"
+                                [class.is-active]="modalProductId() === row.product_id"
+                                (mousedown)="$event.preventDefault()"
+                                (click)="selectPickerProduct(row.product_id)"
+                              >
+                                <span class="product-picker__name">{{ row.name }}</span>
+                                <span class="product-picker__meta">
+                                  @if (row.sku) {
+                                    <span>{{ row.sku }}</span>
+                                  }
+                                  <span>Stock {{ formatQtyPlain(stockOnHand(row)) }}</span>
+                                </span>
+                              </button>
+                            </li>
+                          }
+                        }
+                      </ul>
+                    }
+                  </div>
+                </div>
+                <label class="form__field form__field--span2">
+                  <span class="form__label">Cantidad (máx. {{ formatQtyPlain(saleStockAvailable()) }})</span>
+                  <input
+                    class="form__input"
+                    type="number"
+                    formControlName="quantity"
+                    min="0.0001"
+                    step="any"
+                    [attr.max]="saleStockAvailable() > 0 ? saleStockAvailable() : null"
+                  />
+                </label>
+                <label class="form__field">
+                  <span class="form__label">Precio venta unit. (opcional)</span>
+                  <input class="form__input" type="number" formControlName="unitSalePrice" min="0" step="any" />
+                </label>
+                <label class="form__field">
+                  <span class="form__label">Costo al vender (opcional)</span>
+                  <input class="form__input" type="number" formControlName="unitCostAtSale" min="0" step="any" />
+                </label>
+                <label class="form__field form__field--span2">
+                  <span class="form__label">Nota</span>
+                  <input class="form__input" type="text" formControlName="note" />
+                </label>
+              </div>
+              <div class="modal__actions">
+                <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
+                <button
+                  class="form__submit"
+                  type="submit"
+                  [disabled]="
+                    savingSale() ||
+                    saleStockAvailable() <= 0 ||
+                    saleQtyExceedsStock() ||
+                    !saleDefaultsComplete()
+                  "
+                >
+                  {{ savingSale() ? 'Guardando…' : 'Registrar venta' }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      }
+
+      @if (modal === 'purchase') {
+        <div
+          class="modal__panel modal__panel--wide"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-purchase-title"
+        >
+          <div class="modal__head">
+            <h2 class="modal__title" id="modal-purchase-title">Registrar compra</h2>
+            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+          </div>
+          @if (inventory().length === 0) {
+            <p class="page__muted">Primero creá productos en Inventario.</p>
+          } @else {
+            <p class="modal__help">Buscá productos, agregalos a la lista y registrá la compra de una vez.</p>
+
+            <div class="form form--modal">
+              <div class="form__grid">
+                <div class="form__field form__field--span2">
+                  <span class="form__label">Producto</span>
+                  @if (modalSelectedProduct(); as selected) {
+                    <p class="product-picker__selected">{{ productOptionLabel(selected) }}</p>
+                  }
+                  <div class="product-picker">
+                    <input
+                      class="form__input product-picker__input"
+                      type="search"
+                      placeholder="Buscar por nombre o SKU…"
+                      [value]="productPickerQuery()"
+                      (input)="onProductPickerInput(($any($event.target)).value)"
+                      (focus)="openProductPicker()"
+                      (blur)="closeProductPickerSoon()"
+                      autocomplete="off"
+                    />
+                    @if (productPickerOpen()) {
+                      <ul class="product-picker__list" role="listbox">
+                        @if (productPickerResults().length === 0) {
+                          <li class="product-picker__empty">Ningún producto coincide.</li>
+                        } @else {
+                          @for (row of productPickerResults(); track row.product_id) {
+                            <li>
+                              <button
+                                type="button"
+                                class="product-picker__option"
+                                [class.is-active]="modalProductId() === row.product_id"
+                                (mousedown)="$event.preventDefault()"
+                                (click)="selectPickerProduct(row.product_id)"
+                              >
+                                <span class="product-picker__name">{{ row.name }}</span>
+                                <span class="product-picker__meta">
+                                  @if (row.sku) {
+                                    <span>{{ row.sku }}</span>
+                                  }
+                                </span>
+                              </button>
+                            </li>
+                          }
+                        }
+                      </ul>
+                    }
+                  </div>
+                </div>
+                <label class="form__field">
+                  <span class="form__label">Cantidad</span>
+                  <input
+                    class="form__input"
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    [value]="purchaseDraftQty()"
+                    (input)="onPurchaseDraftQty(($any($event.target)).value)"
+                  />
+                </label>
+                <label class="form__field">
+                  <span class="form__label">Costo unit.</span>
+                  <input
+                    class="form__input"
+                    type="number"
+                    min="0"
+                    step="any"
+                    [value]="purchaseDraftCost()"
+                    (input)="onPurchaseDraftCost(($any($event.target)).value)"
+                  />
+                </label>
+                <div class="form__field form__field--span2">
+                  <button type="button" class="moves-actions__btn moves-actions__btn--primary" (click)="addPurchaseLine()">
+                    Agregar a la compra
+                  </button>
+                </div>
+              </div>
+
+              @if (purchaseLines().length > 0) {
+                <div class="purchase-lines">
+                  <div class="purchase-lines__head">
+                    <h3 class="purchase-lines__title">Artículos ({{ purchaseLines().length }})</h3>
+                    <span class="purchase-lines__total">Total {{ formatMoney(purchaseLinesTotal()) }}</span>
+                  </div>
+                  <ul class="purchase-lines__list">
+                    @for (line of purchaseLines(); track line.key) {
+                      <li class="purchase-lines__item">
+                        <div class="purchase-lines__main">
+                          <span class="purchase-lines__name">
+                            {{ line.name }}
+                            @if (line.sku) {
+                              <span class="purchase-lines__sku">{{ line.sku }}</span>
+                            }
+                          </span>
+                          <span class="purchase-lines__detail">
+                            {{ formatQtyPlain(line.quantity) }} × {{ formatMoney(line.unitCost) }} =
+                            {{ formatMoney(line.quantity * line.unitCost) }}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          class="purchase-lines__remove"
+                          (click)="removePurchaseLine(line.key)"
+                          aria-label="Quitar artículo"
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              } @else {
+                <p class="page__muted">Todavía no agregaste artículos.</p>
+              }
+
+              <label class="form__field form__field--span2 purchase-note">
+                <span class="form__label">Nota (opcional, para todos los ítems)</span>
+                <input
+                  class="form__input"
+                  type="text"
+                  [value]="purchaseNote()"
+                  (input)="onPurchaseNote(($any($event.target)).value)"
+                />
+              </label>
+
+              <div class="modal__actions">
+                <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
+                <button
+                  class="form__submit"
+                  type="button"
+                  [disabled]="savingPurchase() || purchaseLines().length === 0"
+                  (click)="recordPurchase()"
+                >
+                  {{ savingPurchase() ? 'Guardando…' : 'Registrar compra' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
   }
 </div>

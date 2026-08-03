@@ -3,6 +3,7 @@ export type CompanyRow = {
   name: string;
   created_at: string;
   reporting_timezone?: string;
+  logo_path?: string | null;
 };
 
 export type CompanyMemberRole = 'owner' | 'admin' | 'member';
@@ -14,6 +15,8 @@ export type CompanyMemberRow = {
   role: CompanyMemberRole;
   email: string | null;
   created_at: string;
+  avatar_url?: string | null;
+  display_name?: string | null;
 };
 
 export type CompanyInviteStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
@@ -75,6 +78,7 @@ export type InventorySnapshotRow = {
 export type MovementListRow = {
   id: string;
   created_at: string;
+  product_id: string;
   movement_type: string;
   quantity: string | number;
   unit_cost: number | string | null;

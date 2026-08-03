@@ -162,7 +162,11 @@
               <li class="company-list__item">
                 <div class="company-list__identity">
                   <span class="company-list__avatar" [attr.data-tone]="avatarTone(c.name)" aria-hidden="true">
-                    {{ companyInitial(c.name) }}
+                    @if (c.logoUrl) {
+                      <img [src]="c.logoUrl" [alt]="c.name" loading="lazy" />
+                    } @else {
+                      {{ companyInitial(c.name) }}
+                    }
                   </span>
                   <div class="company-list__main">
                     <span class="company-list__name">
@@ -212,6 +216,9 @@
                   <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'movimientos']">Movimientos</a>
                   <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'equipo']">Equipo</a>
                   <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'resumen']">Resumen</a>
+                  @if (canEditCompany(c.role)) {
+                    <a class="company-list__action" [routerLink]="['/app/companies', c.id, 'editar']">Editar</a>
+                  }
                 </div>
               </li>
             }

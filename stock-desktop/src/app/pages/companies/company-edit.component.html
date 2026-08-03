@@ -1,0 +1,68 @@
+<div class="page">
+  <a class="page__back" routerLink="/app/companies">← Volver a empresas</a>
+  <h1 class="page__title">Editar empresa</h1>
+  <p class="page__lead">Cambiá el nombre o la foto que se muestra en tus listados.</p>
+
+  @if (loading()) {
+    <p class="page__muted">Cargando…</p>
+  } @else {
+    @if (errorMessage(); as err) {
+      <div class="page__alert" role="alert">{{ err }}</div>
+    }
+    @if (successMessage(); as ok) {
+      <div class="page__ok" role="status">{{ ok }}</div>
+    }
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="form__field">
+        <span class="form__label">Nombre de la empresa</span>
+        <input class="form__input" type="text" formControlName="name" autocomplete="organization" />
+        @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+          <span class="form__error">El nombre es obligatorio.</span>
+        }
+        @if (form.controls.name.touched && form.controls.name.hasError('minlength')) {
+          <span class="form__error">Al menos 2 caracteres.</span>
+        }
+      </label>
+
+      <div class="form__field">
+        <span class="form__label">Foto</span>
+        <div class="logo-pick">
+          <div class="logo-pick__preview" aria-hidden="true">
+            @if (logoUrl(); as url) {
+              <img [src]="url" alt="" />
+            } @else {
+              <span class="logo-pick__placeholder">{{ form.controls.name.value.trim().charAt(0).toUpperCase() || '?' }}</span>
+            }
+          </div>
+          <div class="logo-pick__controls">
+            <label class="logo-pick__btn">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                [disabled]="uploading()"
+                (change)="onLogoSelected($event)"
+              />
+              {{ uploading() ? 'Subiendo…' : logoUrl() ? 'Cambiar foto' : 'Subir foto' }}
+            </label>
+            @if (logoUrl()) {
+              <button type="button" class="logo-pick__clear" [disabled]="uploading()" (click)="removeLogo()">
+                Quitar foto
+              </button>
+            }
+            <span class="form__hint">JPG, PNG, WEBP o GIF · máx. 5 MB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form__actions">
+        <button class="form__submit" type="submit" [disabled]="saving() || uploading()">
+          {{ saving() ? 'Guardando…' : 'Guardar nombre' }}
+        </button>
+        @if (companyId(); as cid) {
+          <a class="form__link" [routerLink]="['/app/companies', cid, 'products']">Ir al inventario</a>
+        }
+      </div>
+    </form>
+  }
+</div>

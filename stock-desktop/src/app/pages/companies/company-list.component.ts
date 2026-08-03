@@ -14,6 +14,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CompanyAccessService } from '../../core/company-access.service';
+import { CompanyLogosService } from '../../core/company-logos.service';
 import { SessionService } from '../../core/session.service';
 import { SupabaseService } from '../../core/supabase.service';
 import type { CompanyMemberRole, CompanyRow } from '../../models/stock.types';
@@ -27,6 +28,7 @@ type CompanyListItem = CompanyRow & {
   movesInToday: number;
   movesOutToday: number;
   movesLast7Days: number;
+  logoUrl: string | null;
 };
 
 @Component({
@@ -38,6 +40,7 @@ type CompanyListItem = CompanyRow & {
 export class CompanyListComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
   private readonly access = inject(CompanyAccessService);
+  private readonly logos = inject(CompanyLogosService);
   private readonly sessionService = inject(SessionService);
   private readonly filtersEl = viewChild<ElementRef<HTMLElement>>('filtersEl');
 
@@ -110,6 +113,10 @@ export class CompanyListComponent implements OnInit {
     return this.access.roleLabel(role);
   }
 
+  canEditCompany(role: CompanyMemberRole | null): boolean {
+    return this.access.canEditCompanySettings(role);
+  }
+
   companyInitial(name: string): string {
     const t = name.trim();
     return t ? t.charAt(0).toUpperCase() : '?';
@@ -159,7 +166,10 @@ export class CompanyListComponent implements OnInit {
     this.errorMessage.set(null);
 
     const [companiesRes, roles] = await Promise.all([
-      this.supabase.client.from('companies').select('id,name,created_at').order('created_at', { ascending: false }),
+      this.supabase.client
+        .from('companies')
+        .select('id,name,created_at,logo_path')
+        .order('created_at', { ascending: false }),
       this.access.getMyRolesByCompany(),
     ]);
 
@@ -240,6 +250,7 @@ export class CompanyListComponent implements OnInit {
         movesInToday: movesInToday.get(c.id) ?? 0,
         movesOutToday: movesOutToday.get(c.id) ?? 0,
         movesLast7Days: movesLast7Days.get(c.id) ?? 0,
+        logoUrl: this.logos.publicUrl(c.logo_path),
       })),
     );
     this.loading.set(false);

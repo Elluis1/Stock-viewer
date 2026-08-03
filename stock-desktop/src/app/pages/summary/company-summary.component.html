@@ -1,7 +1,5 @@
-<div class="page">
-  <div class="page__breadcrumbs">
-    <a routerLink="/app/companies">← Empresas</a>
-  </div>
+<div class="page summary">
+  <a class="page__back" routerLink="/app/companies">← Mis empresas</a>
 
   @if (loading()) {
     <p class="page__muted">Cargando…</p>
@@ -10,7 +8,7 @@
   } @else {
     <div class="page__head">
       <div>
-        <h1 class="page__title">Resumen global</h1>
+        <h1 class="page__title">Resumen</h1>
         <p class="page__subtitle">{{ companyName() }} · Tu rol: {{ roleLabel() }}</p>
       </div>
       <label class="page__date">
@@ -18,125 +16,140 @@
         <input type="date" [value]="dayStr()" (change)="onDayChange($event)" />
       </label>
     </div>
+
     @if (companyId(); as cid) {
-      <nav class="tabs" aria-label="Secciones de la empresa">
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
-        <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
-        <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
-      </nav>
-    }
-
-    @if (errorMessage()) {
-      <div class="page__alert" role="alert">{{ errorMessage() }}</div>
-    }
-
-    <section class="panel">
-      <h2 class="panel__title">Zona horaria local del reporte</h2>
-      <p class="panel__help">
-        Define qué cuenta como día/mes/año para esta empresa (ej. <code>America/Bogota</code>, <code>Europe/Madrid</code>, <code>UTC</code>).
-      </p>
-      @if (canEditCompanySettings) {
-      <div class="tz">
-        <select #tzSelect class="tz__select" [value]="reportingTimezone()">
-          @for (tz of timezoneOptionsForSelect(); track tz.value) {
-            <option [value]="tz.value">{{ tz.label }}</option>
-          }
-        </select>
-        <button class="tz__btn" type="button" [disabled]="savingTimezone()" (click)="saveTimezone(tzSelect.value)">
-          {{ savingTimezone() ? 'Guardando…' : 'Guardar zona horaria' }}
-        </button>
+      <div class="summary-section-bar">
+        <nav class="tabs" aria-label="Secciones de la empresa">
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'products']">Inventario</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'movimientos']">Movimientos</a>
+          <a class="tabs__item tabs__item--active" [routerLink]="['/app/companies', cid, 'resumen']">Resumen</a>
+          <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
+        </nav>
+        <a class="summary-link" [routerLink]="['/app/companies', cid, 'movimientos']">Ver movimientos →</a>
       </div>
-      } @else {
-        <p class="page__muted">Zona actual: <strong>{{ reportingTimezone() }}</strong> (solo owner/admin pueden cambiarla).</p>
-      }
-    </section>
+    }
+
+    @if (errorMessage(); as err) {
+      <div class="page__alert" role="alert">{{ err }}</div>
+    }
 
     @if (loadingSummary()) {
       <p class="page__muted">Cargando resumen…</p>
     } @else {
-      <section class="panel">
-        <h2 class="panel__title">Mensual ({{ monthLabel() }})</h2>
-        <div class="cards">
+      <section class="summary-hero" aria-labelledby="summary-month-title">
+        <div class="summary-hero__head">
+          <div>
+            <p class="summary-kicker">Este mes</p>
+            <h2 class="summary-hero__title" id="summary-month-title">{{ monthLabel() }}</h2>
+          </div>
+          <p class="summary-hero__compare">Comparado con {{ previousMonthLabel() }}</p>
+        </div>
+        <div class="cards cards--hero">
           <div class="card card--in">
             <span class="card__label">Ingresos</span>
             <span class="card__value">{{ formatMoney(monthCurrent().salesRevenue) }}</span>
-            <span class="card__hint">vs {{ previousMonthLabel() }}: {{ formatDeltaPct(monthDeltaRevenuePct()) }}</span>
+            <span class="card__hint" [class]="deltaClass(monthDeltaRevenuePct())">
+              {{ formatDeltaPct(monthDeltaRevenuePct()) }}
+            </span>
           </div>
           <div class="card card--out">
             <span class="card__label">Gastos compras</span>
             <span class="card__value">{{ formatMoney(monthCurrent().purchaseSpend) }}</span>
-            <span class="card__hint">Control de costo de reposición</span>
+            <span class="card__hint">Costo de reposición</span>
           </div>
           <div class="card card--net">
             <span class="card__label">Balance neto</span>
             <span class="card__value">{{ formatMoney(monthCurrent().netBalance) }}</span>
-            <span class="card__hint">vs {{ previousMonthLabel() }}: {{ formatDeltaPct(monthDeltaNetPct()) }}</span>
+            <span class="card__hint" [class]="deltaClass(monthDeltaNetPct())">
+              {{ formatDeltaPct(monthDeltaNetPct()) }}
+            </span>
           </div>
           <div class="card card--profit">
             <span class="card__label">Ganancia bruta</span>
             <span class="card__value">{{ formatMoney(monthCurrent().grossProfit) }}</span>
-            <span class="card__hint">Ventas - costo de lo vendido</span>
+            <span class="card__hint">Ventas − costo de lo vendido</span>
           </div>
         </div>
       </section>
 
-      <section class="panel">
-        <h2 class="panel__title">Anual ({{ yearLabel() }})</h2>
-        <div class="cards">
-          <div class="card card--in">
+      <section class="summary-year" aria-labelledby="summary-year-title">
+        <div class="summary-year__head">
+          <h2 class="summary-block__title" id="summary-year-title">Año {{ yearLabel() }}</h2>
+          <p class="summary-year__compare">vs {{ previousYearLabel() }}</p>
+        </div>
+        <div class="cards cards--compact">
+          <div class="card card--compact card--in">
             <span class="card__label">Ingresos</span>
             <span class="card__value">{{ formatMoney(yearCurrent().salesRevenue) }}</span>
-            <span class="card__hint">vs {{ previousYearLabel() }}: {{ formatDeltaPct(yearDeltaRevenuePct()) }}</span>
+            <span class="card__hint" [class]="deltaClass(yearDeltaRevenuePct())">
+              {{ formatDeltaPct(yearDeltaRevenuePct()) }}
+            </span>
           </div>
-          <div class="card card--out">
-            <span class="card__label">Gastos compras</span>
+          <div class="card card--compact card--out">
+            <span class="card__label">Compras</span>
             <span class="card__value">{{ formatMoney(yearCurrent().purchaseSpend) }}</span>
-            <span class="card__hint">Acumulado anual</span>
           </div>
-          <div class="card card--net">
-            <span class="card__label">Balance neto</span>
+          <div class="card card--compact card--net">
+            <span class="card__label">Balance</span>
             <span class="card__value">{{ formatMoney(yearCurrent().netBalance) }}</span>
-            <span class="card__hint">vs {{ previousYearLabel() }}: {{ formatDeltaPct(yearDeltaNetPct()) }}</span>
+            <span class="card__hint" [class]="deltaClass(yearDeltaNetPct())">
+              {{ formatDeltaPct(yearDeltaNetPct()) }}
+            </span>
           </div>
-          <div class="card card--profit">
+          <div class="card card--compact card--profit">
             <span class="card__label">Ganancia bruta</span>
             <span class="card__value">{{ formatMoney(yearCurrent().grossProfit) }}</span>
-            <span class="card__hint">Ventas - costo de lo vendido</span>
           </div>
         </div>
       </section>
 
-      <section class="panel panel--table">
-        <h2 class="panel__title">Top productos del mes</h2>
-        <p class="panel__help">Ranking por facturación del mes seleccionado.</p>
+      <section class="summary-rank" aria-labelledby="summary-top-title">
+        <div class="summary-rank__head">
+          <h2 class="summary-block__title" id="summary-top-title">Top productos del mes</h2>
+          <p class="summary-rank__lead">Por facturación en {{ monthLabel() }}</p>
+        </div>
         @if (topProductsMonth().length === 0) {
           <p class="page__muted">No hay ventas en este mes.</p>
         } @else {
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th class="table__num">Unidades</th>
-                  <th class="table__num">Ingresos</th>
-                  <th class="table__num">Ganancia bruta</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of topProductsMonth(); track row.productName) {
-                  <tr>
-                    <td>{{ row.productName }}</td>
-                    <td class="table__num">{{ formatQty(row.unitsSold) }}</td>
-                    <td class="table__num">{{ formatMoney(row.salesRevenue) }}</td>
-                    <td class="table__num">{{ formatMoney(row.grossProfit) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+          <ol class="rank-list">
+            @for (row of topProductsMonth(); track row.productName; let i = $index) {
+              <li class="rank-list__item">
+                <span class="rank-list__pos">{{ i + 1 }}</span>
+                <span class="rank-list__name">{{ row.productName }}</span>
+                <span class="rank-list__meta">{{ formatQty(row.unitsSold) }} ud</span>
+                <span class="rank-list__value">{{ formatMoney(row.salesRevenue) }}</span>
+                <span class="rank-list__profit">{{ formatMoney(row.grossProfit) }}</span>
+              </li>
+            }
+          </ol>
+          <div class="rank-list__legend">
+            <span>Unidades</span>
+            <span>Ingresos</span>
+            <span>Ganancia bruta</span>
           </div>
         }
       </section>
+
+      <details class="summary-tz">
+        <summary>Zona horaria del reporte · {{ reportingTimezone() }}</summary>
+        <p class="summary-tz__help">
+          Define qué cuenta como día/mes/año para esta empresa (ej. America/Argentina/Buenos_Aires).
+        </p>
+        @if (canEditCompanySettings) {
+          <div class="tz">
+            <select #tzSelect class="tz__select" [value]="reportingTimezone()">
+              @for (tz of timezoneOptionsForSelect(); track tz.value) {
+                <option [value]="tz.value">{{ tz.label }}</option>
+              }
+            </select>
+            <button class="tz__btn" type="button" [disabled]="savingTimezone()" (click)="saveTimezone(tzSelect.value)">
+              {{ savingTimezone() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="page__muted">Solo owner o admin pueden cambiarla.</p>
+        }
+      </details>
     }
   }
 </div>

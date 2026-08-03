@@ -20,19 +20,12 @@
           <a class="tabs__item" [routerLink]="['/app/companies', cid, 'equipo']">Equipo</a>
         </nav>
 
-        @if (canManageCatalog || canOperateStock) {
+        @if (canManageCatalog) {
           <div class="inv-actions">
-            @if (canManageCatalog) {
-              <button type="button" class="inv-actions__btn inv-actions__btn--primary" (click)="openModal('product')">
-                Nuevo producto
-              </button>
-            }
-            @if (canOperateStock && catalog().length > 0) {
-              <button type="button" class="inv-actions__btn" (click)="openModal('purchase')">
-                Registrar compra
-              </button>
-            }
-            @if (canManageCatalog && catalog().length > 0) {
+            <button type="button" class="inv-actions__btn inv-actions__btn--primary" (click)="openModal('product')">
+              Nuevo producto
+            </button>
+            @if (catalog().length > 0) {
               <button type="button" class="inv-actions__btn" (click)="openModal('price')">
                 Precio por defecto
               </button>
@@ -191,7 +184,11 @@
               </div>
 
               @if (companyId(); as cid) {
-                <a class="inv-detail__link" [routerLink]="['/app/companies', cid, 'movimientos']">
+                <a
+                  class="inv-detail__link"
+                  [routerLink]="['/app/companies', cid, 'movimientos']"
+                  [queryParams]="{ productId: product.product_id }"
+                >
                   Ver movimientos →
                 </a>
               }
@@ -313,45 +310,6 @@
               <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
               <button class="form__submit" type="submit" [disabled]="savingProduct()">
                 {{ savingProduct() ? 'Guardando…' : 'Agregar' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      }
-
-      @if (modal === 'purchase') {
-        <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-purchase-title">
-          <div class="modal__head">
-            <h2 class="modal__title" id="modal-purchase-title">Registrar compra</h2>
-            <button type="button" class="modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
-          </div>
-          <form class="form form--modal" [formGroup]="purchaseForm" (ngSubmit)="recordPurchase()" novalidate>
-            <div class="form__grid">
-              <label class="form__field form__field--span2">
-                <span class="form__label">Producto</span>
-                <select class="form__input" formControlName="productId">
-                  @for (row of catalog(); track row.product_id) {
-                    <option [value]="row.product_id">{{ row.name }}</option>
-                  }
-                </select>
-              </label>
-              <label class="form__field">
-                <span class="form__label">Cantidad</span>
-                <input class="form__input" type="number" formControlName="quantity" min="0.0001" step="any" />
-              </label>
-              <label class="form__field">
-                <span class="form__label">Costo unit.</span>
-                <input class="form__input" type="number" formControlName="unitCost" min="0" step="any" />
-              </label>
-              <label class="form__field form__field--span2">
-                <span class="form__label">Nota</span>
-                <input class="form__input" type="text" formControlName="note" />
-              </label>
-            </div>
-            <div class="modal__actions">
-              <button type="button" class="modal__cancel" (click)="closeModal()">Cancelar</button>
-              <button class="form__submit" type="submit" [disabled]="savingPurchase()">
-                {{ savingPurchase() ? 'Guardando…' : 'Registrar' }}
               </button>
             </div>
           </form>

@@ -163,6 +163,13 @@ export class CompanySummaryComponent implements OnInit {
     return `${sign}${value.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
   }
 
+  deltaClass(value: number | null): string {
+    if (value === null || !Number.isFinite(value) || Math.abs(value) < 0.05) {
+      return 'card__hint';
+    }
+    return value > 0 ? 'card__hint is-up' : 'card__hint is-down';
+  }
+
   monthLabel(): string {
     const [y, m] = this.dayStr().split('-').map(Number);
     const d = new Date(y, m - 1, 1);

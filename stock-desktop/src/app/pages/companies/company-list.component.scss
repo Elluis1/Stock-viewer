@@ -318,6 +318,14 @@
   letter-spacing: 0;
   color: #fff;
   background: linear-gradient(145deg, #3d5c56, #1f3a35);
+  overflow: hidden;
+}
+
+.company-list__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .company-list__avatar[data-tone='1'] {

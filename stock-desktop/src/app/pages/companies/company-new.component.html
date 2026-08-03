@@ -1,7 +1,7 @@
 <div class="page">
   <a class="page__back" routerLink="/app/companies">← Volver a empresas</a>
   <h1 class="page__title">Nueva empresa</h1>
-  <p class="page__lead">El nombre es el que verás en listados y reportes. Podés cambiarlo más adelante cuando agreguemos edición.</p>
+  <p class="page__lead">El nombre y la foto son lo que verás en listados. Podés editarlos después.</p>
 
   @if (errorMessage(); as err) {
     <div class="page__alert" role="alert">{{ err }}</div>
@@ -18,6 +18,37 @@
         <span class="form__error">Al menos 2 caracteres.</span>
       }
     </label>
+
+    <div class="form__field">
+      <span class="form__label">Foto (opcional)</span>
+      <div class="logo-pick">
+        <div class="logo-pick__preview" aria-hidden="true">
+          @if (logoPreviewUrl(); as preview) {
+            <img [src]="preview" alt="" />
+          } @else {
+            <span class="logo-pick__placeholder">?</span>
+          }
+        </div>
+        <div class="logo-pick__controls">
+          <label class="logo-pick__btn">
+            <input
+              #logoInput
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="onLogoSelected($event)"
+            />
+            {{ logoFileName() ? 'Cambiar foto' : 'Elegir foto' }}
+          </label>
+          @if (logoFileName(); as name) {
+            <button type="button" class="logo-pick__clear" (click)="clearLogoSelection(logoInput)">Quitar</button>
+            <span class="form__hint">{{ name }}</span>
+          } @else {
+            <span class="form__hint">JPG, PNG, WEBP o GIF · máx. 5 MB</span>
+          }
+        </div>
+      </div>
+    </div>
+
     <div class="form__actions">
       <button class="form__submit" type="submit" [disabled]="loading()">
         {{ loading() ? 'Creando…' : 'Crear empresa' }}

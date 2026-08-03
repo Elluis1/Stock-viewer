@@ -13,8 +13,8 @@ export class CompanyTeamService {
 
   listMembers(companyId: string) {
     return this.supabase.client
-      .from('company_members')
-      .select('id,company_id,user_id,role,email,created_at')
+      .from('company_members_directory')
+      .select('id,company_id,user_id,role,email,created_at,avatar_url,display_name')
       .eq('company_id', companyId)
       .order('created_at', { ascending: true });
   }

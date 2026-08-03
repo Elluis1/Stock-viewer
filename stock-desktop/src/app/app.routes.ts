@@ -9,6 +9,7 @@ import { authGuard } from './core/auth.guard';
 import { redirectIfAuthenticatedGuard } from './core/redirect-if-authenticated.guard';
 import { CompanyListComponent } from './pages/companies/company-list.component';
 import { CompanyNewComponent } from './pages/companies/company-new.component';
+import { CompanyEditComponent } from './pages/companies/company-edit.component';
 import { ProductListComponent } from './pages/products/product-list.component';
 import { CompanyMovesComponent } from './pages/moves/company-moves.component';
 import { CompanySummaryComponent } from './pages/summary/company-summary.component';
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'companies' },
       { path: 'companies', component: CompanyListComponent },
       { path: 'companies/new', component: CompanyNewComponent },
+      { path: 'companies/:companyId/editar', component: CompanyEditComponent },
       { path: 'companies/:companyId/products', component: ProductListComponent },
       { path: 'companies/:companyId/movimientos', component: CompanyMovesComponent },
       { path: 'companies/:companyId/resumen', component: CompanySummaryComponent },

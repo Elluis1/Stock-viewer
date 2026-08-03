@@ -80,7 +80,7 @@
   align-items: center;
   gap: 0.35rem;
   min-height: 2.15rem;
-  padding: 0.3rem 0.65rem;
+  padding: 0.2rem 0.45rem 0.2rem 0.25rem;
   border-radius: 999px;
   border: 1px solid transparent;
   background: transparent;
@@ -102,6 +102,24 @@
   border-color: var(--shell-line);
 }
 
+.shell__user-avatar {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  background: var(--mist);
+}
+
+.shell__user-avatar--fallback {
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(145deg, #0d7a5f, #0a5f4a);
+}
+
 .shell__user-caret {
   opacity: 0.65;
 }
@@ -117,6 +135,29 @@
   background: var(--surface);
   box-shadow: var(--shadow-soft);
   z-index: 40;
+}
+
+.shell__menu-user {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.55rem 0.55rem;
+}
+
+.shell__menu-avatar {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.shell__menu-user-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--shell-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shell__menu-item {
@@ -231,13 +272,6 @@
     font-size: 0.82rem;
   }
 
-  .shell__user-name {
-    max-width: 7.5rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .shell__main {
     padding: 0.85rem 0 1.5rem;
   }
@@ -248,11 +282,7 @@
     padding-inline: 0.7rem;
   }
 
-  .shell__user-name {
-    max-width: 4.5rem;
-  }
-
   .shell__user-btn {
-    padding-inline: 0.5rem;
+    padding-inline: 0.35rem;
   }
 }

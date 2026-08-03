@@ -5,6 +5,7 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
 import { SessionService } from './core/session.service';
 import { ThemeService } from './core/theme.service';
+import { avatarFromUserMetadata, resolveAvatarUrl } from './shared/avatar-url';
 
 @Component({
   selector: 'app-root',
@@ -36,6 +37,23 @@ export class AppComponent {
       return fromMeta.split(/\s+/)[0] ?? fromMeta;
     }
     return user.email?.split('@')[0]?.trim() || 'Cuenta';
+  });
+
+  protected readonly userAvatarUrl = computed(() => {
+    const user = this.session()?.user;
+    if (!user) {
+      return null;
+    }
+    return resolveAvatarUrl({
+      avatarUrl: avatarFromUserMetadata(user.user_metadata as Record<string, unknown>),
+      email: user.email,
+      size: 64,
+    });
+  });
+
+  protected readonly userInitial = computed(() => {
+    const label = this.userLabel();
+    return (label[0] ?? 'C').toUpperCase();
   });
 
   protected readonly themeMenuLabel = computed(() =>
